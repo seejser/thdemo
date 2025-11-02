@@ -82,7 +82,7 @@ watch(
 
 .page-container {
   flex: 1;
-  padding: 16px;
+  /* padding: 16px; */
   overflow-y: auto;
 }
 

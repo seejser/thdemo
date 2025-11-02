@@ -30,6 +30,7 @@ body,
 .dark-theme .nut-pull-refresh,
 .dark-theme .nut-cell,
 .dark-theme .nut-navbar {
+  --body-color: #f8fafcff;
   background-color: #242424 !important;
   color: #fff !important;
 }

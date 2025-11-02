@@ -36,9 +36,8 @@
     <!-- 软件版本和退出按钮 -->
     <div class="footer-card">
       <nut-button type="danger" block @click="logout">退出登录</nut-button>
-      <div class="version">{{ version }}</div>
     </div>
-
+    <div class="version">{{ version }}</div>
     <!-- 底部固定 TabBar -->
     <nut-tabbar v-model="activeTab" bottom safe-area-inset-bottom>
       <nut-tabbar-item tab-title="首页">
@@ -105,8 +104,7 @@ const logout = () => {
   flex-direction: column;
   /* background-color: var(--bg-color); */
   color: var(--text-color);
-  width: 100%;
-  height: 100%;
+  padding: 12px 16px;
 }
 
 /* 顶部用户信息 */
@@ -188,6 +186,9 @@ const logout = () => {
 }
 
 .version {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   color: #888;
   font-size: 14px;
 }
