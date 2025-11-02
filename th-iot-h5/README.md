@@ -1,5 +1,40 @@
-# Vue 3 + Vite
+# th-ios-h5
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+使用 vue3+vite+vue-router@4+Axios+开发物联网系统移动端 H5 app 应用程序，主要功能包括：
+用户登录/注册，获取设备列表，设备详情
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+主要技术栈：
+
+- [vue3](https://cn.vuejs.org)
+- [vite](https://cn.vite.dev)
+- [vue-router@4](https://router.vuejs.org/zh/)
+- [Axios](https://axios-http.com)
+- [nutui](https://nutui.jd.com/h5/vue/4x/#/zh-CN/guide/intro)
+
+## 项目初始化
+
+```sh
+# 创建项目
+npx create-react-app th-iot-h5
+# 进入项目
+cd th-iot-h5
+#运行项目
+npm run dev
+#项目打包
+npm run build
+```
+
+## 添加项目依赖
+
+```sh
+#nutui
+npm i @nutui/nutui
+# vue-router@4
+npm install vue-router@4
+# axios
+npm install axios
+```
+
+## 开发
+
+1. 配置路由

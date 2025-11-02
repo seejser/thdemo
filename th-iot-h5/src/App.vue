@@ -1,79 +1,84 @@
 <template>
   <nut-config-provider :theme="theme">
-    <div :class="themeClass">
-      <nut-cell title="Dark">
-        <template #link>
-          <nut-switch v-model="checked" @change="change" />
-        </template>
-      </nut-cell>
-      <nut-navbar title="设备列表"></nut-navbar>
-      <nut-infinite-loading
-        v-model="infinityValue"
-        :has-more="hasMore"
-        @load-more="loadMore"
-      >
-        <nut-pull-refresh
-          v-model="refresh"
-          @refresh="refreshFun"
-          loosing-txt="松开吧"
-          loading-txt="玩命刷新中..."
-          :complete-duration="1000"
-        >
-          <div class="test" v-for="(item, index) in sum" :key="index">
-            {{ index }}
-          </div>
-        </nut-pull-refresh>
-      </nut-infinite-loading>
+    <div :class="['app-container', themeClass]">
+      <!-- 顶部导航 -->
+      <nav class="nav-bar">
+        <router-link to="/" class="nav-item" exact-active-class="active">首页</router-link>
+        <router-link to="/detail" class="nav-item" exact-active-class="active">详情</router-link>
+      </nav>
+
+      <!-- 页面内容区域 -->
+      <main class="page-container">
+        <router-view />
+      </main>
     </div>
   </nut-config-provider>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed } from 'vue'
 
-const theme = ref("");
-const checked = ref(false);
-const themeClass = computed(() => (theme.value === "dark" ? "dark-theme" : "light-theme"));
+// 当前主题，可切换为 'light' 或 'dark'
+const theme = ref('light')
 
-const cycle = ref(0);
-const tabsValue = ref(0);
-const sum = ref(24);
-const infinityValue = ref(false);
-const hasMore = ref(true);
-const loadMore = () => {
-  setTimeout(() => {
-    sum.value += 24;
-    cycle.value++;
-    if (cycle.value > 2) hasMore.value = false;
-    infinityValue.value = false;
-  }, 1000);
-};
-const refresh = ref(false);
-const refreshFun = () => {
-  setTimeout(() => {
-    refresh.value = false;
-    sum.value = 24;
-  }, 3000);
-};
-const change = (v) => {
-  theme.value = v ? "dark" : "light";
-};
+// 根据主题切换对应样式类
+const themeClass = computed(() => (theme.value === 'dark' ? 'theme-dark' : 'theme-light'))
 </script>
 
-<style>
-
-.test {
-  padding: 12px 0 12px 20px;
-  border-top: 1px solid #eee;
+<style scoped>
+/* ======= 全局布局 ======= */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
-.dark-theme .test {
-  background-color: #333;
-  color: #fff;
+/* ======= 导航栏 ======= */
+.nav-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+  background-color: var(--nav-bg);
 }
 
-.light-theme .test {
-  background-color: #fff;
-  color: #333;
+.nav-item {
+  color: var(--link-color);
+  text-decoration: none;
+  margin: 0 12px;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+
+.nav-item.active {
+  color: var(--active-color);
+  font-weight: bold;
+}
+
+/* ======= 页面内容 ======= */
+.page-container {
+  flex: 1;
+  padding: 16px;
+}
+
+/* ======= 主题样式 ======= */
+.theme-light {
+  --bg-color: #fff;
+  --text-color: #333;
+  --link-color: #666;
+  --active-color: #1989fa;
+  --nav-bg: #fafafa;
+}
+
+.theme-dark {
+  --bg-color: #1e1e1e;
+  --text-color: #eee;
+  --link-color: #aaa;
+  --active-color: #64b5f6;
+  --nav-bg: #2c2c2c;
 }
 </style>
