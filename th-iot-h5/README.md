@@ -38,3 +38,9 @@ npm install axios
 ## 开发
 
 1. 配置路由
+2. 添加图标
+
+```sh
+#添加图标
+npm i --save @nutui/icons-vue
+```

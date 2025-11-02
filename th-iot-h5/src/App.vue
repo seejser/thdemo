@@ -1,84 +1,104 @@
 <template>
   <nut-config-provider :theme="theme">
     <div :class="['app-container', themeClass]">
-      <!-- 顶部导航 -->
-      <nav class="nav-bar">
-        <router-link to="/" class="nav-item" exact-active-class="active">首页</router-link>
-        <router-link to="/detail" class="nav-item" exact-active-class="active">详情</router-link>
-      </nav>
-
-      <!-- 页面内容区域 -->
+      <!-- 页面内容 -->
       <main class="page-container">
         <router-view />
       </main>
+
+      <!-- 底部 TabBar -->
+      <nut-tabbar
+        v-model="activeTab"
+        bottom
+        safe-area-inset-bottom
+      >
+        <nut-tabbar-item tab-title="首页">
+          <template #icon>
+            <Home />
+          </template>
+        </nut-tabbar-item>
+        <nut-tabbar-item tab-title="我的">
+          <template #icon>
+            <My />
+          </template>
+        </nut-tabbar-item>
+      </nut-tabbar>
     </div>
   </nut-config-provider>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { Home, My } from '@nutui/icons-vue'
 
-// 当前主题，可切换为 'light' 或 'dark'
+const router = useRouter()
+const route = useRoute()
+
+// 主题
 const theme = ref('light')
-
-// 根据主题切换对应样式类
 const themeClass = computed(() => (theme.value === 'dark' ? 'theme-dark' : 'theme-light'))
+
+// Tab 选中索引
+const activeTab = ref(0)
+
+// 路由对应关系
+const tabRoutes = ['/', '/me']
+
+// 页面切换时同步 Tab 高亮
+watch(
+  () => route.path,
+  (path) => {
+    const index = tabRoutes.indexOf(path)
+    if (index >= 0) activeTab.value = index
+  },
+  { immediate: true }
+)
+
+// Tab 索引变化时跳转路由
+watch(
+  activeTab,
+  async (index) => {
+    const path = tabRoutes[index]
+    if (path && path !== route.path) {
+      try {
+        await router.push(path)
+      } catch (err) {
+        console.error('路由跳转失败:', err)
+      }
+    }
+  }
+)
 </script>
 
 <style scoped>
-/* ======= 全局布局 ======= */
 .app-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
 }
 
-/* ======= 导航栏 ======= */
-.nav-bar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-  background-color: var(--nav-bg);
-}
-
-.nav-item {
-  color: var(--link-color);
-  text-decoration: none;
-  margin: 0 12px;
-  font-size: 16px;
-  transition: color 0.2s;
-}
-
-.nav-item.active {
-  color: var(--active-color);
-  font-weight: bold;
-}
-
-/* ======= 页面内容 ======= */
 .page-container {
   flex: 1;
   padding: 16px;
+  overflow-y: auto;
 }
 
-/* ======= 主题样式 ======= */
 .theme-light {
   --bg-color: #fff;
   --text-color: #333;
-  --link-color: #666;
   --active-color: #1989fa;
-  --nav-bg: #fafafa;
 }
 
 .theme-dark {
   --bg-color: #1e1e1e;
   --text-color: #eee;
-  --link-color: #aaa;
   --active-color: #64b5f6;
-  --nav-bg: #2c2c2c;
+}
+
+.nut-tabbar-item--active {
+  color: var(--active-color);
 }
 </style>
