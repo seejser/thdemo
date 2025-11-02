@@ -37,10 +37,21 @@ npm install axios
 
 ## 开发
 
-1. 配置路由
-2. 添加图标
+- 配置路由
+- 添加图标
 
 ```sh
 #添加图标
 npm i --save @nutui/icons-vue
+```
+
+- 页面跳转
+
+```sh
+#导入 router
+import { useRouter } from "vue-router";
+#获取 router 实例
+const router = useRouter();
+
+router.push({ path: `/device/${id}` });
 ```

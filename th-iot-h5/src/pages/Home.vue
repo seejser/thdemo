@@ -81,6 +81,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { Home as HomeIcon, My as MyIcon } from "@nutui/icons-vue";
+import { useRouter } from "vue-router"; // 导入 router
 
 // 主题
 const theme = ref("light");
@@ -88,6 +89,7 @@ const themeClass = computed(() =>
   theme.value === "dark" ? "dark-theme" : "light-theme"
 );
 
+const router = useRouter(); // 获取 router 实例
 // 底部 Tab
 const activeTab = ref(0);
 
@@ -158,7 +160,8 @@ const relayToggle = (id, relay) => {
 
 // 设备详情跳转
 const getDeviceDetail = (id) => {
-  alert(`跳转到设备详情页，ID: ${id}`);
+  console.log(`跳转到设备详情页，ID: ${id}`);
+  router.push({ path: `/detail/${id}` });
 };
 
 // 生命周期：组件挂载时加载初始设备

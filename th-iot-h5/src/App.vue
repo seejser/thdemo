@@ -1,17 +1,12 @@
 <template>
   <nut-config-provider :theme="theme">
     <div :class="['app-container', themeClass]">
-      <!-- 页面内容 -->
       <main class="page-container">
         <router-view />
       </main>
 
-      <!-- 底部 TabBar -->
-      <nut-tabbar
-        v-model="activeTab"
-        bottom
-        safe-area-inset-bottom
-      >
+      <!-- 只有一级页面显示 TabBar -->
+      <nut-tabbar v-if="showTabBar" v-model="activeTab" bottom safe-area-inset-bottom>
         <nut-tabbar-item tab-title="首页">
           <template #icon>
             <Home />
@@ -28,48 +23,40 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { Home, My } from '@nutui/icons-vue'
+import { ref, computed, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { Home, My } from "@nutui/icons-vue";
 
-const router = useRouter()
-const route = useRoute()
+const route = useRoute();
+const router = useRouter();
 
 // 主题
-const theme = ref('light')
-const themeClass = computed(() => (theme.value === 'dark' ? 'theme-dark' : 'theme-light'))
+const theme = ref("light");
+const themeClass = computed(() => (theme.value === "dark" ? "theme-dark" : "theme-light"));
 
-// Tab 选中索引
-const activeTab = ref(0)
+// Tab
+const activeTab = ref(0);
+const tabRoutes = ["/", "/me"];
+const showTabBar = ref(true);
 
-// 路由对应关系
-const tabRoutes = ['/', '/me']
-
-// 页面切换时同步 Tab 高亮
+// 页面切换
 watch(
   () => route.path,
   (path) => {
-    const index = tabRoutes.indexOf(path)
-    if (index >= 0) activeTab.value = index
+    showTabBar.value = route.meta.showTabBar !== false; // 默认显示 TabBar，meta=false 不显示
+    const index = tabRoutes.indexOf(path);
+    if (index >= 0) activeTab.value = index;
   },
   { immediate: true }
-)
+);
 
-// Tab 索引变化时跳转路由
-watch(
-  activeTab,
-  async (index) => {
-    const path = tabRoutes[index]
-    if (path && path !== route.path) {
-      try {
-        await router.push(path)
-      } catch (err) {
-        console.error('路由跳转失败:', err)
-      }
-    }
-  }
-)
+// Tab 切换跳路由
+watch(activeTab, (index) => {
+  const path = tabRoutes[index];
+  if (path && path !== route.path) router.push(path);
+});
 </script>
+
 
 <style scoped>
 .app-container {
@@ -82,7 +69,6 @@ watch(
 
 .page-container {
   flex: 1;
-  /* padding: 16px; */
   overflow-y: auto;
 }
 

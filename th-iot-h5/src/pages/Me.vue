@@ -8,15 +8,14 @@
       <div class="user-details">
         <div class="username">{{ username }}</div>
       </div>
-      <!-- 编辑图标按钮，放在右上角 -->
       <nut-button
-        class="edit-btn"
+        class="set-btn"
         shape="circle"
         size="small"
-        type="primary"
-        @click="editProfile"
+        type="default"
+        @click="openSettings"
       >
-        <EditIcon />
+        <SettingIcon />
       </nut-button>
     </div>
 
@@ -55,19 +54,22 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, createVNode } from "vue";
+import { useRouter } from "vue-router"; // 导入 router
 import {
   Home as HomeIcon,
   My as MyIcon,
-  Edit as EditIcon,
+  Setting as SettingIcon,
 } from "@nutui/icons-vue";
+import { showDialog } from '@nutui/nutui'
+
 
 // 主题切换
 const theme = ref("light");
 const themeClass = computed(() =>
   theme.value === "dark" ? "dark-theme" : "light-theme"
 );
-
+const router = useRouter(); // 获取 router 实例
 // 底部 Tab
 const activeTab = ref(1); // 默认选中“我的”
 
@@ -76,8 +78,9 @@ const avatarUrl = ref("https://i.pravatar.cc/150?img=3");
 const username = ref("张三");
 
 // 编辑图标按钮
-const editProfile = () => {
-  console.log("点击编辑用户信息");
+const openSettings = () => {
+  console.log("点击设置按钮");
+  // 可以跳转到设置页面或打开设置弹窗
 };
 
 // 菜单列表
@@ -93,8 +96,24 @@ const version = ref("v1.0.0");
 // 退出登录
 const logout = () => {
   console.log("退出登录");
-  // 可在这里清理 token 并跳转登录页
+  showDialog({
+    title: "退出登录",
+    content: createVNode(
+      "span",
+      { style: { color: "red" } },
+      "确定要退出登录吗？"
+    ),
+    onCancel,
+    onOk,
+  });
 };
+const onCancel = () => {
+  console.log('event cancel')
+}
+const onOk = () => {
+  console.log('event ok')
+  router.push({ path: `/login` });
+}
 </script>
 
 <style scoped>
@@ -132,12 +151,31 @@ const logout = () => {
 }
 
 /* 编辑按钮图标 */
-.edit-btn {
+.set-btn {
   position: absolute;
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  padding: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  line-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  border: none;
+  box-shadow: none;
+  background-color: rgba(0, 0, 0, 0.001); /* 背景弱化 */
+  color: #666; /* 图标颜色弱化 */
+  font-size: 18px;
+}
+
+/* 可选：调整图标大小 */
+.set-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block; /* 防止 svg 继承行高 */
 }
 
 /* 功能菜单列表 */
@@ -153,10 +191,14 @@ const logout = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #eee;
+  padding: 14px 20px; /* 略微紧凑 */
+  border-bottom: 1px solid #f0f0f0; /* 更柔和的边线 */
+  /* margin-bottom: 12px; 项目间距 */
+  border-radius: 8px; /* 圆润角 */
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.3s, transform 0.2s;
+  background-color: #fff; /* 白色背景更干净 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
 }
 
 .menu-item:last-child {
