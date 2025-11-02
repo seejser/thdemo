@@ -1,0 +1,13 @@
+{
+  "miniprogramRoot": "./",
+  "projectname": "h5app",
+  "description": "iot app 控制端",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram"
+}
