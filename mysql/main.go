@@ -454,7 +454,7 @@ type UserRole struct {
 
 func main() {
 	// 连接 MySQL 数据库
-	dsn := "root:123456@tcp(127.0.0.1:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "root:123456@tcp(127.0.0.1:3306)/test4db?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // 表名单数
