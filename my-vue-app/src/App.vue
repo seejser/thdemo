@@ -1,11 +1,11 @@
 <template>
   <nut-config-provider :theme="theme">
     <div :class="themeClass">
-      <nut-cell title="Dark">
+      <!-- <nut-cell title="Dark">
         <template #link>
           <nut-switch v-model="checked" @change="change" />
         </template>
-      </nut-cell>
+      </nut-cell> -->
       <nut-navbar title="设备列表"></nut-navbar>
       <nut-infinite-loading
         v-model="infinityValue"

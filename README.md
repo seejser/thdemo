@@ -16,3 +16,8 @@
 - [git 官网](https://git-scm.com/)
 - [菜鸟教程](https://www.runoob.com/)
 - [docker 官网](https://www.docker.com/)
+- [vue3](https://cn.vuejs.org)
+- [vite](https://cn.vite.dev)
+- [vue-router@4](https://router.vuejs.org/zh/)
+- [Axios](https://axios-http.com)
+- [nutui](https://nutui.jd.com/h5/vue/4x/#/zh-CN/guide/intro)
