@@ -24,12 +24,17 @@
           </div>
         </nut-pull-refresh>
       </nut-infinite-loading>
+      <nut-tabbar v-model="active" bottom safe-area-inset-bottom placeholder>
+    <nut-tabbar-item v-for="(item, index) in List" :key="index" :tab-title="item.title" :icon="item.icon">
+    </nut-tabbar-item>
+  </nut-tabbar>
     </div>
   </nut-config-provider>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { h,ref, computed } from "vue";
+import { Home, Category, Find, Cart, My } from '@nutui/icons-vue'
 
 const theme = ref("");
 const checked = ref(false);
@@ -40,6 +45,7 @@ const tabsValue = ref(0);
 const sum = ref(24);
 const infinityValue = ref(false);
 const hasMore = ref(true);
+const active = ref(0)
 const loadMore = () => {
   setTimeout(() => {
     sum.value += 24;
@@ -58,6 +64,29 @@ const refreshFun = () => {
 const change = (v) => {
   theme.value = v ? "dark" : "light";
 };
+const List = [
+  {
+    title: 'Home',
+    icon: h(Home)
+  },
+  {
+    title: 'Category',
+    icon: h(Category)
+  },
+  {
+    title: 'Find',
+    icon: h(Find)
+  },
+  {
+    title: 'Cart',
+    icon: h(Cart)
+  },
+  {
+    title: 'My',
+    icon: h(My)
+  }
+]
+
 </script>
 
 <style>
