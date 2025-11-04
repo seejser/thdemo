@@ -22,7 +22,6 @@
 //     fmt.Println("连接 MySQL 成功！")
 // }
 
-
 // package main
 
 // import (
@@ -197,9 +196,6 @@
 //     fmt.Println("包含软删除用户数量:", len(allUsers))
 // }
 
-
-
-
 // package main
 
 // import (
@@ -304,118 +300,211 @@
 //     fmt.Println("包含软删除用户数量:", len(allUsers))
 // }
 
+// package main
+
+// import (
+//     "fmt"
+//     "time"
+
+//     "gorm.io/driver/mysql"
+//     "gorm.io/gorm"
+//     "gorm.io/gorm/schema"
+// )
+
+// // User 对应 users 表，使用 DeletedAt 实现软删除
+// type User struct {
+//     ID        uint           `gorm:"primaryKey;autoIncrement;comment:用户ID，自增主键"`
+//     Username  string         `gorm:"size:50;not null;unique;comment:用户名，唯一标识用户"`
+//     Password  string         `gorm:"size:255;not null;comment:用户密码（加密存储）"`
+//     Email     string         `gorm:"size:100;comment:用户邮箱，用于联系或找回密码"`
+//     CreatedAt time.Time      `gorm:"autoCreateTime;comment:创建时间"`
+//     UpdatedAt time.Time      `gorm:"autoUpdateTime;comment:更新时间"`
+//     DeletedAt gorm.DeletedAt `gorm:"index;comment:逻辑删除标志，软删除"`
+
+//     Profile Profile `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"` // 一对一关系
+//     Posts   []Post  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"` // 一对多关系
+// }
+
+// // Profile 对应 user_profiles 表
+// type Profile struct {
+//     ID        uint      `gorm:"primaryKey;autoIncrement"`
+//     UserID    uint      `gorm:"uniqueIndex;comment:关联用户ID"` // 外键
+//     FullName  string    `gorm:"size:100;comment:用户真实姓名"`
+//     Bio       string    `gorm:"type:text;comment:用户简介"`
+//     Avatar    string    `gorm:"size:255;comment:用户头像URL"`
+//     Phone     string    `gorm:"size:20;comment:手机号"`
+//     WeChat    string    `gorm:"size:50;comment:微信号"`
+//     CreatedAt time.Time `gorm:"autoCreateTime"`
+//     UpdatedAt time.Time `gorm:"autoUpdateTime"`
+// }
+
+// // Post 对应 posts 表，表示用户的帖子
+// type Post struct {
+//     ID        uint      `gorm:"primaryKey;autoIncrement;comment:帖子ID"`
+//     UserID    uint      `gorm:"index;comment:关联用户ID"`  // 外键
+//     Title     string    `gorm:"size:255;not null;comment:帖子标题"`
+//     Content   string    `gorm:"type:text;comment:帖子内容"`
+//     CreatedAt time.Time `gorm:"autoCreateTime"`
+//     UpdatedAt time.Time `gorm:"autoUpdateTime"`
+// }
+
+// func main() {
+//     // 连接 MySQL 数据库
+//     dsn := "root:123456@tcp(127.0.0.1:3306)/test3db?charset=utf8mb4&parseTime=True&loc=Local"
+//     db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+//         NamingStrategy: schema.NamingStrategy{
+//             SingularTable: true, // 表名单数
+//         },
+//     })
+//     if err != nil {
+//         panic("数据库连接失败: " + err.Error())
+//     }
+//     fmt.Println("✅ 数据库连接成功")
+
+//     // 自动迁移 User, Profile 和 Post
+//     err = db.AutoMigrate(&User{}, &Profile{}, &Post{})
+//     if err != nil {
+//         panic("自动迁移失败: " + err.Error())
+//     }
+//     fmt.Println("✅ users、user_profiles 和 posts 表自动创建或更新完成")
+
+//     // 创建用户及多个帖子
+//     user := User{
+//         Username: "bob",
+//         Password: "123456",
+//         Email:    "bob@example.com",
+//         Profile: Profile{
+//             FullName: "Bob Smith",
+//             Bio:      "Tech Enthusiast",
+//             Avatar:   "https://example.com/avatar/bob.jpg",
+//             Phone:    "13800138001",
+//             WeChat:   "bobwechat",
+//         },
+//         Posts: []Post{
+//             {Title: "Go Programming", Content: "Go is an open-source programming language."},
+//             {Title: "MySQL Tutorial", Content: "MySQL is an open-source relational database."},
+//         },
+//     }
+//     db.Create(&user)
+//     fmt.Println("创建用户ID:", user.ID)
+
+//     // 查询用户及帖子（预加载 Profile 和 Posts）
+//     var u User
+//     db.Preload("Profile").Preload("Posts").First(&u, "username = ?", "bob")
+//     fmt.Println("查询用户:", u.Username, u.Email)
+//     fmt.Println("用户资料:", u.Profile.FullName, u.Profile.Bio, u.Profile.Avatar, u.Profile.Phone, u.Profile.WeChat)
+//     fmt.Println("用户帖子数量:", len(u.Posts))
+
+//     // 查询某个用户的所有帖子
+//     var posts []Post
+//     db.Where("user_id = ?", u.ID).Find(&posts)
+//     fmt.Println("用户的帖子数量:", len(posts))
+
+//     // 更新用户的帖子
+//     db.Model(&u.Posts[0]).Update("Content", "Go is an efficient, statically typed language.")
+//     fmt.Println("更新后的帖子内容:", u.Posts[0].Content)
+
+//     // 逻辑删除帖子
+//     db.Delete(&u.Posts[0])
+//     fmt.Println("已软删除帖子:", u.Posts[0].Title)
+
+//     // 查询包括软删除的帖子
+//     var allPosts []Post
+//     db.Unscoped().Where("user_id = ?", u.ID).Find(&allPosts)
+//     fmt.Println("包括软删除的帖子数量:", len(allPosts))
+// }
+
 package main
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"time"
 
-    "gorm.io/driver/mysql"
-    "gorm.io/gorm"
-    "gorm.io/gorm/schema"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 // User 对应 users 表，使用 DeletedAt 实现软删除
 type User struct {
-    ID        uint           `gorm:"primaryKey;autoIncrement;comment:用户ID，自增主键"`
-    Username  string         `gorm:"size:50;not null;unique;comment:用户名，唯一标识用户"`
-    Password  string         `gorm:"size:255;not null;comment:用户密码（加密存储）"`
-    Email     string         `gorm:"size:100;comment:用户邮箱，用于联系或找回密码"`
-    CreatedAt time.Time      `gorm:"autoCreateTime;comment:创建时间"`
-    UpdatedAt time.Time      `gorm:"autoUpdateTime;comment:更新时间"`
-    DeletedAt gorm.DeletedAt `gorm:"index;comment:逻辑删除标志，软删除"`
+	ID        uint           `gorm:"primaryKey;autoIncrement;comment:用户ID，自增主键"`
+	Username  string         `gorm:"size:50;not null;unique;comment:用户名，唯一标识用户"`
+	Password  string         `gorm:"size:255;not null;comment:用户密码（加密存储）"`
+	Email     string         `gorm:"size:100;comment:用户邮箱，用于联系或找回密码"`
+	CreatedAt time.Time      `gorm:"autoCreateTime;comment:创建时间"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime;comment:更新时间"`
+	DeletedAt gorm.DeletedAt `gorm:"index;comment:逻辑删除标志，软删除"`
 
-    Profile Profile `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"` // 一对一关系
-    Posts   []Post  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"` // 一对多关系
+	Roles []Role `gorm:"many2many:user_roles;"`
 }
 
-// Profile 对应 user_profiles 表
-type Profile struct {
-    ID        uint      `gorm:"primaryKey;autoIncrement"`
-    UserID    uint      `gorm:"uniqueIndex;comment:关联用户ID"` // 外键
-    FullName  string    `gorm:"size:100;comment:用户真实姓名"`
-    Bio       string    `gorm:"type:text;comment:用户简介"`
-    Avatar    string    `gorm:"size:255;comment:用户头像URL"`
-    Phone     string    `gorm:"size:20;comment:手机号"`
-    WeChat    string    `gorm:"size:50;comment:微信号"`
-    CreatedAt time.Time `gorm:"autoCreateTime"`
-    UpdatedAt time.Time `gorm:"autoUpdateTime"`
+// Role 对应 roles 表
+type Role struct {
+	ID        uint      `gorm:"primaryKey;autoIncrement;comment:角色ID"`
+	Name      string    `gorm:"size:50;not null;unique;comment:角色名称"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
-// Post 对应 posts 表，表示用户的帖子
-type Post struct {
-    ID        uint      `gorm:"primaryKey;autoIncrement;comment:帖子ID"`
-    UserID    uint      `gorm:"index;comment:关联用户ID"`  // 外键
-    Title     string    `gorm:"size:255;not null;comment:帖子标题"`
-    Content   string    `gorm:"type:text;comment:帖子内容"`
-    CreatedAt time.Time `gorm:"autoCreateTime"`
-    UpdatedAt time.Time `gorm:"autoUpdateTime"`
+// UserRole 用于多对多关系的关联表，连接 User 和 Role
+type UserRole struct {
+	UserID uint `gorm:"primaryKey;comment:用户ID"`
+	RoleID uint `gorm:"primaryKey;comment:角色ID"`
 }
 
 func main() {
-    // 连接 MySQL 数据库
-    dsn := "root:123456@tcp(127.0.0.1:3306)/test3db?charset=utf8mb4&parseTime=True&loc=Local"
-    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-        NamingStrategy: schema.NamingStrategy{
-            SingularTable: true, // 表名单数
-        },
-    })
-    if err != nil {
-        panic("数据库连接失败: " + err.Error())
-    }
-    fmt.Println("✅ 数据库连接成功")
+	// 连接 MySQL 数据库
+	dsn := "root:123456@tcp(127.0.0.1:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true, // 表名单数
+		},
+	})
+	if err != nil {
+		panic("数据库连接失败: " + err.Error())
+	}
+	fmt.Println("✅ 数据库连接成功")
 
-    // 自动迁移 User, Profile 和 Post
-    err = db.AutoMigrate(&User{}, &Profile{}, &Post{})
-    if err != nil {
-        panic("自动迁移失败: " + err.Error())
-    }
-    fmt.Println("✅ users、user_profiles 和 posts 表自动创建或更新完成")
+	// 自动迁移 User, Role 和 UserRole
+	err = db.AutoMigrate(&User{}, &Role{}, &UserRole{})
+	if err != nil {
+		panic("自动迁移失败: " + err.Error())
+	}
+	fmt.Println("✅ users、roles 和 user_roles 表自动创建或更新完成")
 
-    // 创建用户及多个帖子
-    user := User{
-        Username: "bob",
-        Password: "123456",
-        Email:    "bob@example.com",
-        Profile: Profile{
-            FullName: "Bob Smith",
-            Bio:      "Tech Enthusiast",
-            Avatar:   "https://example.com/avatar/bob.jpg",
-            Phone:    "13800138001",
-            WeChat:   "bobwechat",
-        },
-        Posts: []Post{
-            {Title: "Go Programming", Content: "Go is an open-source programming language."},
-            {Title: "MySQL Tutorial", Content: "MySQL is an open-source relational database."},
-        },
-    }
-    db.Create(&user)
-    fmt.Println("创建用户ID:", user.ID)
+	// 创建角色
+	adminRole := Role{Name: "Admin"}
+	db.Create(&adminRole)
 
-    // 查询用户及帖子（预加载 Profile 和 Posts）
-    var u User
-    db.Preload("Profile").Preload("Posts").First(&u, "username = ?", "bob")
-    fmt.Println("查询用户:", u.Username, u.Email)
-    fmt.Println("用户资料:", u.Profile.FullName, u.Profile.Bio, u.Profile.Avatar, u.Profile.Phone, u.Profile.WeChat)
-    fmt.Println("用户帖子数量:", len(u.Posts))
+	userRole := Role{Name: "User"}
+	db.Create(&userRole)
 
-    // 查询某个用户的所有帖子
-    var posts []Post
-    db.Where("user_id = ?", u.ID).Find(&posts)
-    fmt.Println("用户的帖子数量:", len(posts))
+	// 创建用户并分配角色
+	user := User{
+		Username: "john_doe",
+		Password: "123456",
+		Email:    "john@example.com",
+		Roles:    []Role{adminRole, userRole}, // 分配角色
+	}
+	db.Create(&user)
+	fmt.Println("创建用户ID:", user.ID)
 
-    // 更新用户的帖子
-    db.Model(&u.Posts[0]).Update("Content", "Go is an efficient, statically typed language.")
-    fmt.Println("更新后的帖子内容:", u.Posts[0].Content)
+	// 查询用户及角色（预加载 Roles）
+	var u User
+	db.Preload("Roles").First(&u, "username = ?", "john_doe")
+	fmt.Println("查询用户:", u.Username, u.Email)
+	fmt.Println("用户角色:", u.Roles)
 
-    // 逻辑删除帖子
-    db.Delete(&u.Posts[0])
-    fmt.Println("已软删除帖子:", u.Posts[0].Title)
+	// 查询某个用户的所有角色
+	var roles []Role
+	db.Model(&user).Association("Roles").Find(&roles)
+	fmt.Println("用户的角色数量:", len(roles))
 
-    // 查询包括软删除的帖子
-    var allPosts []Post
-    db.Unscoped().Where("user_id = ?", u.ID).Find(&allPosts)
-    fmt.Println("包括软删除的帖子数量:", len(allPosts))
+	// 给用户添加角色
+	db.Model(&user).Association("Roles").Append([]Role{{Name: "Editor"}})
+	fmt.Println("新增角色后用户角色数量:", len(user.Roles))
+
+	// 删除角色（从用户的角色列表中移除）
+	db.Model(&user).Association("Roles").Delete(&userRole)
+	fmt.Println("删除角色后用户角色数量:", len(user.Roles))
 }
-
-

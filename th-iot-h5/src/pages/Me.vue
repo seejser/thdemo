@@ -91,7 +91,7 @@ const menuItems = ref([
 ]);
 
 // 软件版本
-const version = ref("v1.0.0");
+const version = ref("V0.1.1");
 
 // 退出登录
 const logout = () => {
