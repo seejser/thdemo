@@ -13,7 +13,7 @@
     "@nutui/nutui": "^4.3.14",
     "axios": "^1.13.1",
     "vue": "^3.5.22",
-    "vue-router": "4"
+    "vue-router": "^4.6.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",

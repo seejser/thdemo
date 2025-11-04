@@ -582,7 +582,7 @@ to-regex-range@^5.0.1:
   optionalDependencies:
     fsevents "~2.3.3"
 
-vue-router@4:
+vue-router@^4.6.3:
   version "4.6.3"
   resolved "https://registry.npmmirror.com/vue-router/-/vue-router-4.6.3.tgz"
   integrity sha512-ARBedLm9YlbvQomnmq91Os7ck6efydTSpRP3nuOKCvgJOHNrhRoJDSKtee8kcL1Vf7nz6U+PMBL+hTvR3bTVQg==
