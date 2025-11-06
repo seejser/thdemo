@@ -1,11 +1,18 @@
 <template>
-  <h1>Hello App!</h1>
-  <p><strong>Current route path:</strong> {{ $route.fullPath }}</p>
-  <nav>
-    <RouterLink to="/">Go to Home</RouterLink>
-    <RouterLink to="/detail">Go to Detail</RouterLink>
-  </nav>
-  <main>
-    <RouterView />
-  </main>
+  <nut-config-provider :theme="theme">
+    <div :class="themeClass">
+      <RouterView />
+    </div>
+  </nut-config-provider>
 </template>
+<script setup>
+import { ref, computed } from "vue";
+const theme = ref("");
+const themeClass = computed(() =>
+  theme.value === "dark" ? "dark-theme" : "light-theme"
+);
+// const change = (v) => {
+//   theme.value = v ? "dark" : "light";
+// };
+</script>
+<style></style>
