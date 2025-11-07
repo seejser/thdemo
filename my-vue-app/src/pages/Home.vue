@@ -70,7 +70,7 @@ const refreshFun = () => {
 };
 const goToDetail = (index) => {
   console.log("index:", index);
-   router.push("/detail");
+   router.push("/detail/" + index);
 };
 </script>
 
