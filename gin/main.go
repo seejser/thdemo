@@ -16,6 +16,7 @@ package main
 import (
     "context"
     "fmt"
+	"time"
     "github.com/redis/go-redis/v9"
 )
 
@@ -53,11 +54,11 @@ func main() {
     fmt.Println("📦 读取到的值:", val)
 
     // 5️⃣ 测试过期键
-    err = rdb.Set(ctx, "temp_key", "expire test", 5 * time.Second).Err()
+    err = rdb.Set(ctx, "temp_key", "expire test", 25 * time.Second).Err()
     if err != nil {
         fmt.Println("❌ 设置过期键失败:", err)
         return
     }
-    fmt.Println("⏱ 已设置 temp_key，5秒后自动过期")
+    fmt.Println("⏱ 已设置 temp_key，25秒后自动过期")
 }
 
