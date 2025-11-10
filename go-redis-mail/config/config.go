@@ -8,5 +8,5 @@ var (
 	SMTPHost = "smtp.qq.com"
 	SMTPPort = 587
 	SMTPUser = "1598253545@qq.com" // 发送邮箱
-	SMTPPass = ""  // 邮箱授权码（不是密码）
+	SMTPPass = "nfuzpssryuheiebi"  // 邮箱授权码（不是密码）
 )
