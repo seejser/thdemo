@@ -25,3 +25,4 @@
 - [Redis安装包](https://github.com/tporadowski/redis/releases)
 - [docker](https://www.docker.com/)
 - [流程图工具](https://www.processon.com/)
+- [qq邮箱](https://mail.qq.com/) 账户设置 中，找到 “POP3/IMAP/SMTP/Exchange/CardDAV/CalDAV 服务” 或类似条目，点击 开启服务（或“开启 POP3/IMAP/SMTP 服务”）。系统会要求你进行手机验证（短信/扫码）以确认身份。。
