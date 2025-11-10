@@ -8,11 +8,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
+	"github.com/gin-contrib/cors"
 	"go-redis-mail/utils"
 )
 
 func main() {
 	r := gin.Default()
+	// ✅ 允许跨域
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	r.POST("/send", func(c *gin.Context) {
 		type Request struct {

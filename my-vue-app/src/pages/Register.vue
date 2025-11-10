@@ -6,132 +6,202 @@
         <p>请注册</p>
       </nut-space>
     </div>
+
     <nut-row>
+      <!-- 用户名 -->
       <nut-col :span="24">
         <nut-input v-model="username" placeholder="请输入您的用户名" />
       </nut-col>
+
+      <!-- 邮箱 -->
       <nut-col :span="24">
-        <nut-input v-model="email" placeholder="请输入您的邮箱" />
+        <nut-input v-model="email" placeholder="请输入您的邮箱" type="email" />
       </nut-col>
+
+      <!-- 图形验证码 -->
       <nut-col :span="24">
         <nut-row>
           <nut-col :span="12">
-            <nut-input v-model="calcCode" placeholder="请输入图片中的验证码" />
+            <nut-input
+              v-model="calcCode"
+              placeholder="请输入图片验证码"
+              clearable
+            />
           </nut-col>
-          <nut-col :span="8">
-            <nut-image :src="url" width="100" height="34" />
+          <nut-col :span="8" class="captcha-box">
+            <nut-image
+              :src="captchaImage"
+              width="100"
+              height="34"
+              @click="getCaptcha"
+            />
           </nut-col>
         </nut-row>
       </nut-col>
+
+      <!-- 邮箱验证码 -->
       <nut-col :span="24">
         <nut-row>
           <nut-col :span="12">
             <nut-input
               v-model="verifyCode"
-              placeholder="请输入您的邮箱验证码"
+              placeholder="请输入邮箱验证码"
+              clearable
             />
           </nut-col>
           <nut-col :span="8">
-            <nut-button plain type="info" @click="sendCode"
-              >发送验证码</nut-button
+            <nut-button
+              plain
+              type="info"
+              :disabled="countdown > 0"
+              @click="sendCode"
             >
+              {{ countdown > 0 ? countdown + 's' : '发送验证码' }}
+            </nut-button>
           </nut-col>
         </nut-row>
       </nut-col>
+
+      <!-- 密码 -->
       <nut-col :span="24">
         <nut-input
           v-model="password"
           placeholder="请输入您的密码"
           type="password"
+          clearable
         />
       </nut-col>
+
+      <!-- 确认密码 -->
       <nut-col :span="24">
         <nut-input
           v-model="varpassword"
           placeholder="请确认您的密码"
           type="password"
+          clearable
         />
       </nut-col>
+
+      <!-- 操作按钮 -->
       <nut-col :span="24">
         <nut-space direction="vertical" fill>
-          <nut-button type="primary" @click="register" class="btn"
-            >注册</nut-button
-          >
-          <nut-button type="default" @click="login" class="btn"
-            >登录</nut-button
-          >
+          <nut-button type="primary" @click="register" class="btn">
+            注册
+          </nut-button>
+          <nut-button type="default" @click="login" class="btn">
+            登录
+          </nut-button>
         </nut-space>
       </nut-col>
     </nut-row>
   </div>
 </template>
+
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { showNotify } from "@nutui/nutui";
 
 const router = useRouter();
+
+// 表单字段
 const username = ref("");
-const password = ref("");
-const varpassword = ref("");
 const email = ref("");
 const calcCode = ref("");
 const verifyCode = ref("");
+const password = ref("");
+const varpassword = ref("");
 
-const url =
-  "https://img10.360buyimg.com/ling/jfs/t1/181258/24/10385/53029/60d04978Ef21f2d42/92baeb21f907cd24.jpg";
+// 验证码图片
+const captchaImage = ref("");
+// 邮箱验证码倒计时
+const countdown = ref(0);
+let timer = null;
 
-const login = () => {
-  router.push("/login");
+// // 模拟获取验证码图片
+// const getCaptcha = async () => {
+//   // 实际项目中应从后端获取
+//   captchaImage.value = "http://localhost:9090/captcha?time=" + Date.now();
+// };
+// ✅ 获取验证码（从后端返回JSON）
+const getCaptcha = async () => {
+  const res = await fetch("http://localhost:9090/captcha");
+  const data = await res.json();
+  captchaImage.value = data.image;  // 这是 base64 图片
+  // 记得保存 captcha_id，用于校验
+  localStorage.setItem("captcha_id", data.captcha_id);
 };
+
+// 发送邮箱验证码
+const sendCode = () => {
+  if (!email.value) {
+    return showNotify.warn("请先输入邮箱");
+  }
+  if (!calcCode.value) {
+    return showNotify.warn("请输入图片验证码");
+  }
+
+  // 调用接口发送验证码
+  showNotify.success("验证码已发送");
+
+  // 启动倒计时
+  countdown.value = 60;
+  timer = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      clearInterval(timer);
+    }
+  }, 1000);
+};
+
+// 注册
 const register = () => {
   if (!username.value || !password.value) {
-    showNotify.warn("用户名或密码不能为空");
-    return;
-  }
-  if (!calcCode.value) {
-    showNotify.warn("验证码不能为空");
-    return;
-  }
-  if (!verifyCode.value) {
-    showNotify.warn("验证码不能为空");
-    return;
+    return showNotify.warn("用户名或密码不能为空");
   }
   if (password.value !== varpassword.value) {
-    showNotify.warn("两次输入的密码不一致");
-    return;
+    return showNotify.warn("两次密码输入不一致");
   }
+  if (!email.value) {
+    return showNotify.warn("请输入邮箱");
+  }
+  if (!verifyCode.value) {
+    return showNotify.warn("请输入邮箱验证码");
+  }
+
+  // 模拟注册逻辑
+  showNotify.success("注册成功");
   router.push("/login");
 };
-//发送验证码
-const sendCode = () => {
-  if (!calcCode.value) {
-    showNotify.warn("验证码不能为空");
-    return;
-  }
-};
+
+// 跳转登录页
+const login = () => router.push("/login");
 
 onMounted(() => {
-  console.log("mounted");
+  getCaptcha();
 });
 </script>
-<style>
+
+<style scoped>
 .container {
   padding: 16px;
-  .top-container {
-    /* background-color: #f5f5f5; */
-    padding: 12px 16px;
-    border-bottom: 1px solid #eee;
-    margin-top: 144px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    p {
-      font-size: 14px;
-      color: #666;
-    }
-  }
 }
+
+.top-container {
+  padding: 12px 16px;
+  margin-top: 144px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  border-bottom: 1px solid #eee;
+}
+
+.captcha-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .btn {
   width: 100% !important;
 }
