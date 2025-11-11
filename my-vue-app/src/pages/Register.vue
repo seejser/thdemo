@@ -125,12 +125,13 @@ let timer = null;
 // };
 // ✅ 获取验证码（从后端返回JSON）
 const getCaptcha = async () => {
-  const res = await fetch("http://localhost:9090/captcha");
+  const res = await fetch(`http://localhost:9090/captcha?time=${Date.now()}`);
   const data = await res.json();
-  captchaImage.value = data.image;  // 这是 base64 图片
-  // 记得保存 captcha_id，用于校验
+  captchaImage.value = data.image; // base64 图片
+  // 保存 captcha_id 以便后续校验
   localStorage.setItem("captcha_id", data.captcha_id);
 };
+
 
 // 发送邮箱验证码
 const sendCode = () => {
