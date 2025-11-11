@@ -7,17 +7,25 @@ import (
 )
 
 func InitRouter() *gin.Engine {
+	//  默认带 Logger + Recovery 中间件
 	r := gin.Default()
 
-	api := r.Group("/api/v1/auth")
+	// ✅ 全局中间件
+	r.Use(
+		middleware.CorsMiddleware(),     // 跨域
+		middleware.ResponseMiddleware(), // 统一响应
+	)
+
+	// ✅ 路由分组
+	api := r.Group("/api/v1")
 	{
-		api.GET("/captcha", controllers.GetCaptcha)
-	//api.GET("/email_code", controllers.GetEmailCode)
-		api.POST("/register", controllers.Register)
-		api.POST("/login", controllers.Login)
-		api.GET("/profile", middleware.AuthMiddleware(), func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "已登录"})
-		})
+		auth := api.Group("/auth")
+		{
+			auth.GET("/captcha", controllers.GetCaptcha)
+			// auth.GET("/email_code", controllers.GetEmailCode)
+			auth.POST("/register", controllers.Register)
+			auth.POST("/login", controllers.Login)
+		}
 	}
 
 	return r

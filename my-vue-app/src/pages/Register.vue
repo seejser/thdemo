@@ -125,11 +125,19 @@ let timer = null;
 // };
 // ✅ 获取验证码（从后端返回JSON）
 const getCaptcha = async () => {
-  const res = await fetch(`http://localhost:9090/captcha?time=${Date.now()}`);
-  const data = await res.json();
-  captchaImage.value = data.image; // base64 图片
-  // 保存 captcha_id 以便后续校验
-  localStorage.setItem("captcha_id", data.captcha_id);
+  const res = await fetch(
+    `http://localhost:9090/api/v1/auth/captcha?time=${Date.now()}`
+  );
+  const rs = await res.json();
+  //console.log("rs", rs);
+  const { code, msg, data } = rs;
+  if (code === 0) {
+    captchaImage.value = data.image; // base64 图片
+    // 保存 captcha_id 以便后续校验
+    localStorage.setItem("captcha_id", data.captcha_id);
+  } else {
+    showNotify.error(msg || "获取验证码失败");
+  }
 };
 
 
