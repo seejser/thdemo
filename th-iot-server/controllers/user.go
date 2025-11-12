@@ -22,14 +22,29 @@ func GetCaptcha(c *gin.Context) {
 	})
 }
 func GetEmailCode(c *gin.Context) {
+	ctx := c.Request.Context() // 使用请求上下文
 	var req struct {
-		Username    string `json:"username"`
-		Email       string `json:"email"`
-		CaptchaCode string `json:"captcha_code"`
-		CaptchaId   string `json:"captcha_id"`
+		Username    string `json:"username" form:"username"`
+		Email       string `json:"email" form:"email"`
+		CaptchaCode string `json:"captcha_code" form:"captcha_code"`
+		CaptchaId   string `json:"captcha_id" form:"captcha_id"`
 	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.ReturnError(c, 500, fmt.Errorf("参数错误: %w", err))
+	if err := c.ShouldBind(&req); err != nil {
+		middleware.ReturnError(c, 400, fmt.Errorf("参数错误: %w", err))
+		return
+	}
+	// 验证图形验证码
+	storedCaptcha, err := utils.Rdb.Get(ctx, fmt.Sprintf("captcha:%s", req.CaptchaId)).Result()
+	fmt.Printf("[调试] captcha_id=%s, storedCaptcha=%s, req.CaptchaCode=%s, err=%v\n",
+		req.CaptchaId, storedCaptcha, req.CaptchaCode, err)
+	if err != nil || storedCaptcha != req.CaptchaCode {
+		middleware.ReturnError(c, 400, fmt.Errorf("图形验证码错误"))
+		return
+	}
+
+	// 发送邮件验证码
+	if err := utils.SendVerificationEmail(ctx, req.Email); err != nil {
+		middleware.ReturnError(c, 500, fmt.Errorf("发送邮件验证码失败: %w", err))
 		return
 	}
 

@@ -28,7 +28,7 @@ func SendVerificationEmail(ctx context.Context, email string) error {
 	limitKey := fmt.Sprintf("email:limit:%s", email)
 
 	// 限制发送频率（1分钟内只能发一次）
-	if utils.Rdb.Exists(ctx, limitKey).Val() > 0 {
+	if Rdb.Exists(ctx, limitKey).Val() > 0 {
 		return fmt.Errorf("请求过于频繁，请稍后再试")
 	}
 
@@ -37,12 +37,12 @@ func SendVerificationEmail(ctx context.Context, email string) error {
 	code := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 	// 保存到Redis，5分钟过期
-	if err := utils.Rdb.Set(ctx, emailKey, code, 5*time.Minute).Err(); err != nil {
+	if err :=Rdb.Set(ctx, emailKey, code, 5*time.Minute).Err(); err != nil {
 		return fmt.Errorf("保存验证码失败: %w", err)
 	}
 
 	// 设置发送限制键，1分钟过期
-	if err := utils.Rdb.Set(ctx, limitKey, "1", time.Minute).Err(); err != nil {
+	if err := Rdb.Set(ctx, limitKey, "1", time.Minute).Err(); err != nil {
 		return fmt.Errorf("设置发送限制失败: %w", err)
 	}
 

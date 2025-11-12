@@ -20,6 +20,6 @@ func GenerateCaptcha(ctx context.Context) (string, string, error) {
 	}
 	// 2️⃣ 保存到 Redis (1分钟有效)
 	// store.Set(ctx, fmt.Sprintf("captcha:%s", id), answer, time.Minute)
-	Rdb.Set(ctx, fmt.Sprintf("captcha:%s", id), answer, time.Minute)
+	Rdb.Set(ctx, fmt.Sprintf("captcha:%s", id), answer, 10*time.Minute)
 	return id, item.EncodeB64string(), nil
 }

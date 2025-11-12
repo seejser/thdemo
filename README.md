@@ -23,6 +23,7 @@
 - [nutui](https://nutui.jd.com/h5/vue/4x/#/zh-CN/guide/intro)
 - [Gin](https://gin-gonic.com)
 - [Redis 安装包](https://github.com/tporadowski/redis/releases)
+- [Redis 客户端](hhttps://redis.io/downloads/#Redis_Insight)
 - [docker](https://www.docker.com/)
 - [流程图工具](https://www.processon.com/)
 - [API 工具：postman](https://www.postman.com/)

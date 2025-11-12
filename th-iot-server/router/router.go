@@ -22,7 +22,7 @@ func InitRouter() *gin.Engine {
 		auth := api.Group("/auth")
 		{
 			auth.GET("/captcha", controllers.GetCaptcha)
-			// auth.GET("/email_code", controllers.GetEmailCode)
+			auth.GET("/email_code", controllers.GetEmailCode)
 			auth.POST("/register", controllers.Register)
 			auth.POST("/login", controllers.Login)
 		}
