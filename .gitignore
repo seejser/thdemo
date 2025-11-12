@@ -40,3 +40,4 @@ vendor/
 # Environment files
 .env
 .env.*
+*.zip
