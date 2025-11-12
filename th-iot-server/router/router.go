@@ -25,6 +25,7 @@ func InitRouter() *gin.Engine {
 			auth.GET("/email_code", controllers.GetEmailCode)
 			auth.POST("/register", controllers.Register)
 			auth.POST("/login", controllers.Login)
+			auth.POST("/refresh", controllers.RefreshToken)
 		}
 		// 需要登录的接口
 		user := api.Group("/user")

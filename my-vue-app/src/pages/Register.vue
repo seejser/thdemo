@@ -33,7 +33,7 @@
               :src="captchaImage"
               width="100"
               height="34"
-              @click="getCaptcha"
+              @click="loadCaptcha"
             />
           </nut-col>
         </nut-row>
@@ -54,7 +54,7 @@
               plain
               type="info"
               :disabled="countdown > 0"
-              @click="sendCode"
+              @click="sendEmailVerifyCode"
             >
               {{ countdown > 0 ? countdown + 's' : '发送验证码' }}
             </nut-button>
@@ -85,10 +85,10 @@
       <!-- 操作按钮 -->
       <nut-col :span="24">
         <nut-space direction="vertical" fill>
-          <nut-button type="primary" @click="register" class="btn">
+          <nut-button type="primary" @click="doRegister" class="btn">
             注册
           </nut-button>
-          <nut-button type="default" @click="login" class="btn">
+          <nut-button type="default" @click="goLogin" class="btn">
             登录
           </nut-button>
         </nut-space>
@@ -101,6 +101,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { showNotify } from "@nutui/nutui";
+import { getCaptcha, sendEmailCode, register as apiRegister } from "@/api/auth";
 
 const router = useRouter();
 
@@ -112,48 +113,58 @@ const verifyCode = ref("");
 const password = ref("");
 const varpassword = ref("");
 
-// 验证码图片
+// 验证码图片 & id
 const captchaImage = ref("");
+const captchaId = ref("");
+
 // 邮箱验证码倒计时
 const countdown = ref(0);
 let timer = null;
 
-// // 模拟获取验证码图片
-// const getCaptcha = async () => {
-//   // 实际项目中应从后端获取
-//   captchaImage.value = "http://localhost:9090/captcha?time=" + Date.now();
-// };
-// ✅ 获取验证码（从后端返回JSON）
-const getCaptcha = async () => {
-  const res = await fetch(
-    `http://localhost:9090/api/v1/auth/captcha?time=${Date.now()}`
-  );
-  const rs = await res.json();
-  //console.log("rs", rs);
-  const { code, msg, data } = rs;
-  if (code === 0) {
-    captchaImage.value = data.image; // base64 图片
-    // 保存 captcha_id 以便后续校验
-    localStorage.setItem("captcha_id", data.captcha_id);
-  } else {
-    showNotify.error(msg || "获取验证码失败");
+// 获取验证码
+const loadCaptcha = async () => {
+  try {
+    const res = await getCaptcha();
+    if (res.data.code === 0) {
+      captchaImage.value = res.data.data.image;
+      captchaId.value = res.data.data.captcha_id;
+    } else {
+      showNotify.error(res.data.msg || "获取验证码失败");
+    }
+  } catch (err) {
+    console.error(err);
+    showNotify.error("获取验证码异常");
   }
 };
 
-
 // 发送邮箱验证码
-const sendCode = () => {
-  if (!email.value) {
-    return showNotify.warn("请先输入邮箱");
-  }
-  if (!calcCode.value) {
-    return showNotify.warn("请输入图片验证码");
-  }
+const sendEmailVerifyCode = async () => {
+  if (!email.value) return showNotify.warn("请先输入邮箱");
+  if (!calcCode.value) return showNotify.warn("请输入图片验证码");
+  if (!captchaId.value) return showNotify.warn("请刷新验证码");
 
-  // 调用接口发送验证码
-  showNotify.success("验证码已发送");
+  try {
+    const res = await sendEmailCode({
+      email,
+      captcha: calcCode.value,
+      captcha_id: captchaId.value,
+    });
+    if (res.data.code === 0) {
+      showNotify.success("验证码已发送");
+      startCountdown();
+    } else {
+      showNotify.error(res.data.msg || "发送验证码失败");
+      loadCaptcha();
+    }
+  } catch (err) {
+    console.error(err);
+    showNotify.error("发送验证码异常");
+    loadCaptcha();
+  }
+};
 
-  // 启动倒计时
+// 倒计时逻辑
+const startCountdown = () => {
   countdown.value = 60;
   timer = setInterval(() => {
     countdown.value--;
@@ -164,30 +175,41 @@ const sendCode = () => {
 };
 
 // 注册
-const register = () => {
-  if (!username.value || !password.value) {
-    return showNotify.warn("用户名或密码不能为空");
-  }
-  if (password.value !== varpassword.value) {
-    return showNotify.warn("两次密码输入不一致");
-  }
-  if (!email.value) {
-    return showNotify.warn("请输入邮箱");
-  }
-  if (!verifyCode.value) {
-    return showNotify.warn("请输入邮箱验证码");
-  }
+const doRegister = async () => {
+  if (!username.value || !password.value) return showNotify.warn("用户名或密码不能为空");
+  if (password.value !== varpassword.value) return showNotify.warn("两次密码输入不一致");
+  if (!email.value) return showNotify.warn("请输入邮箱");
+  if (!verifyCode.value) return showNotify.warn("请输入邮箱验证码");
+  if (!captchaId.value) return showNotify.warn("请刷新验证码");
 
-  // 模拟注册逻辑
-  showNotify.success("注册成功");
-  router.push("/login");
+  try {
+    const res = await apiRegister({
+      username: username.value,
+      password: password.value,
+      email: email.value,
+      verifyCode: verifyCode.value,
+      captcha_id: captchaId.value,
+    });
+    if (res.data.code === 0) {
+      showNotify.success("注册成功");
+      router.push("/login");
+    } else {
+      showNotify.error(res.data.msg || "注册失败");
+      loadCaptcha();
+    }
+  } catch (err) {
+    console.error(err);
+    showNotify.error("注册异常");
+    loadCaptcha();
+  }
 };
 
 // 跳转登录页
-const login = () => router.push("/login");
+const goLogin = () => router.push("/login");
 
+// 页面挂载时获取验证码
 onMounted(() => {
-  getCaptcha();
+  loadCaptcha();
 });
 </script>
 

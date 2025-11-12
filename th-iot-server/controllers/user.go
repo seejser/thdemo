@@ -107,6 +107,32 @@ func Login(c *gin.Context) {
 	middleware.ReturnSuccess(c, gin.H{"access_token": accessToken, "refresh_token": refreshToken, "message": "登录成功"})
 }
 
+// RefreshToken 刷新 Access Token
+func RefreshToken(c *gin.Context) {
+	// 从请求中获取 refresh_token
+	var req struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		middleware.ReturnError(c, 400, err)
+		return
+	}
+
+	// 调用 utils 刷新 access token
+	newAccessToken, err := utils.RefreshAccessToken(req.RefreshToken)
+	if err != nil {
+		middleware.ReturnError(c, 401, err)
+		return
+	}
+
+	middleware.ReturnSuccess(c, gin.H{
+		"access_token":  newAccessToken,
+		"refresh_token": req.RefreshToken,
+		"message":       "token刷新成功",
+	})
+}
+
 // 获取当前登录用户信息
 func UserInfo(c *gin.Context) {
 	claims, exists := c.Get("claims")
@@ -134,4 +160,3 @@ func UserInfo(c *gin.Context) {
 		"created":  user.CreatedAt,
 	})
 }
-
