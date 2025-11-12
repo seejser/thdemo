@@ -16,7 +16,9 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users
 ADD COLUMN DeletedAt DATETIME NULL COMMENT '逻辑删除标志，软删除' AFTER updated_at,
 ADD INDEX idx_deleted_at (DeletedAt);
-
+//fix
+DeletedAt   datetime  YES  MUL  NULL
+deleted_at  datetime  YES  NULL
 
 -- 创建数据库
 CREATE DATABASE IF NOT EXISTS thiotdb 
@@ -34,7 +36,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) DEFAULT NULL COMMENT '用户邮箱',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    DeletedAt DATETIME DEFAULT NULL COMMENT '逻辑删除标志，软删除',
+    deleted_at DATETIME DEFAULT NULL COMMENT '逻辑删除标志，软删除',
     PRIMARY KEY (id),
-    INDEX idx_deleted_at (DeletedAt)
+    INDEX idx_deleted_at (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户表';

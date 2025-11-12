@@ -3,15 +3,14 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"th-iot-server/middleware"
 	"th-iot-server/services"
 	"th-iot-server/utils"
 )
 
 func GetCaptcha(c *gin.Context) {
-	ctx := c.Request.Context() // 使用请求上下文
-	id, img, err := utils.GenerateCaptcha(ctx)
+	//ctx := c.Request.Context() // 使用请求上下文
+	id, img, err := utils.GenerateCaptcha()
 	if err != nil {
 		middleware.ReturnError(c, 500, fmt.Errorf("生成验证码失败: %w", err))
 		return
@@ -22,7 +21,7 @@ func GetCaptcha(c *gin.Context) {
 	})
 }
 func GetEmailCode(c *gin.Context) {
-	ctx := c.Request.Context() // 使用请求上下文
+	//ctx := c.Request.Context() // 使用请求上下文
 	var req struct {
 		Username    string `json:"username" form:"username"`
 		Email       string `json:"email" form:"email"`
@@ -34,16 +33,14 @@ func GetEmailCode(c *gin.Context) {
 		return
 	}
 	// 验证图形验证码
-	storedCaptcha, err := utils.Rdb.Get(ctx, fmt.Sprintf("captcha:%s", req.CaptchaId)).Result()
-	fmt.Printf("[调试] captcha_id=%s, storedCaptcha=%s, req.CaptchaCode=%s, err=%v\n",
-		req.CaptchaId, storedCaptcha, req.CaptchaCode, err)
-	if err != nil || storedCaptcha != req.CaptchaCode {
+	valid, err := utils.VerifyCaptcha(req.CaptchaId, req.CaptchaCode)
+	if err != nil || !valid {
 		middleware.ReturnError(c, 400, fmt.Errorf("图形验证码错误"))
 		return
 	}
 
 	// 发送邮件验证码
-	if err := utils.SendVerificationEmail(ctx, req.Email); err != nil {
+	if err := utils.SendVerificationEmail(req.Email); err != nil {
 		middleware.ReturnError(c, 500, fmt.Errorf("发送邮件验证码失败: %w", err))
 		return
 	}
@@ -55,21 +52,34 @@ func GetEmailCode(c *gin.Context) {
 
 func Register(c *gin.Context) {
 	var req struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Email    string `json:"email"`
+		Username  string `json:"username"`
+		Password  string `json:"password"`
+		Email     string `json:"email"`
+		EmailCode string `json:"email_code"` // 邮件验证码
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		middleware.ReturnError(c, 400, fmt.Errorf("参数错误: %w", err))
+		return
+	}
+
+	if req.Username == "" || req.Password == "" || req.Email == "" {
+		middleware.ReturnError(c, 400, fmt.Errorf("用户名、邮箱或密码不能为空"))
+		return
+	}
+
+	// 验证邮件验证码
+	valid, err := utils.VerifyEmailCode(req.Email, req.EmailCode)
+	if err != nil || !valid {
+		middleware.ReturnError(c, 400, fmt.Errorf("邮箱验证码错误"))
 		return
 	}
 
 	if err := services.RegisterUser(req.Username, req.Password, req.Email); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		middleware.ReturnError(c, 400, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "注册成功"})
+	middleware.ReturnSuccess(c, gin.H{"message": "注册成功"})
 }
 
 func Login(c *gin.Context) {
@@ -78,16 +88,50 @@ func Login(c *gin.Context) {
 		Password string `json:"password"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		middleware.ReturnError(c, 400, fmt.Errorf("参数错误"))
 		return
 	}
 
 	user, err := services.LoginUser(req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		middleware.ReturnError(c, 400, err)
+		return
+	}
+	// token 逻辑
+	accessToken, refreshToken, err := utils.GenerateTokenPair(user.ID, user.Username)
+	if err != nil {
+		middleware.ReturnError(c, 500, fmt.Errorf("生成令牌失败: %w", err))
 		return
 	}
 
-	// TODO: 生成 JWT 返回
-	c.JSON(http.StatusOK, gin.H{"message": "登录成功", "user": user})
+	middleware.ReturnSuccess(c, gin.H{"access_token": accessToken, "refresh_token": refreshToken, "message": "登录成功"})
 }
+
+// 获取当前登录用户信息
+func UserInfo(c *gin.Context) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		middleware.ReturnError(c, 401, fmt.Errorf("用户未登录"))
+		return
+	}
+
+	userClaims, ok := claims.(*utils.Claims)
+	if !ok {
+		middleware.ReturnError(c, 500, fmt.Errorf("Claims 类型错误"))
+		return
+	}
+
+	user, err := services.GetUserByID(userClaims.UserID) // 使用 services
+	if err != nil {
+		middleware.ReturnError(c, 404, fmt.Errorf("用户不存在"))
+		return
+	}
+
+	middleware.ReturnSuccess(c, gin.H{
+		"id":       user.ID,
+		"username": user.Username,
+		"email":    user.Email,
+		"created":  user.CreatedAt,
+	})
+}
+

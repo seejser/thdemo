@@ -26,6 +26,12 @@ func InitRouter() *gin.Engine {
 			auth.POST("/register", controllers.Register)
 			auth.POST("/login", controllers.Login)
 		}
+		// 需要登录的接口
+		user := api.Group("/user")
+		user.Use(middleware.AuthMiddleware())
+		{
+			user.GET("/info", controllers.UserInfo)
+		}
 	}
 
 	return r

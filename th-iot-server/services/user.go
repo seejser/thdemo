@@ -32,3 +32,8 @@ func LoginUser(username, password string) (*models.User, error) {
 	}
 	return user, nil
 }
+
+// GetUserByID 获取用户信息
+func GetUserByID(id uint) (*models.User, error) {
+	return dao.User.FindByID(id)
+}
