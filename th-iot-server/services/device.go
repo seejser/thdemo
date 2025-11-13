@@ -1,8 +1,8 @@
 package services
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 
 	"th-iot-server/dao"
 	"th-iot-server/models"
@@ -24,7 +24,7 @@ func (s *deviceService) Update(device *models.Device) error {
 }
 
 // Delete 删除设备
-func (s *deviceService) Delete(id uint64) error {  // 改为 uint64
+func (s *deviceService) Delete(id uint64) error { // 改为 uint64
 	dev, err := dao.Device.FindByID(id)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (s *deviceService) Delete(id uint64) error {  // 改为 uint64
 }
 
 // GetByID 获取单个设备
-func (s *deviceService) GetByID(id uint64) (*models.Device, error) {  // 改为 uint64
+func (s *deviceService) GetByID(id uint64) (*models.Device, error) { // 改为 uint64
 	return dao.Device.FindByID(id)
 }
 
@@ -55,40 +55,54 @@ func (s *deviceService) List(page, limit int, keyword string) ([]models.Device, 
 
 	return list, total, err
 }
+
 // SyncList 从 OneNET 拉取设备列表并保存到本地数据库
 func (s *deviceService) SyncList() error {
-	// 调用 utils 获取设备列表
-	devicesData, err := utils.GetDeviceList()
+	// 拉取设备列表
+	devicesData, err := utils.GetDeviceList(0, 100)
 	if err != nil {
 		return fmt.Errorf("获取 OneNET 设备列表失败: %w", err)
 	}
 
+	if len(devicesData) == 0 {
+		return nil // 没有设备，直接返回
+	}
+
 	for _, d := range devicesData {
-		// 构建 Device 对象
 		device := &models.Device{
-			DeviceID: fmt.Sprintf("%v", d["device_id"]),
-			Name:     fmt.Sprintf("%v", d["name"]),
-			Product:  fmt.Sprintf("%v", d["product_id"]),
-			Region:   fmt.Sprintf("%v", d["region"]),
-			Status:   2, // 默认离线
+			DeviceID: d.Name,       //d.Did为空，先用d.Name
+			Name:     d.Name,      
+			Product:  utils.ProductID,
+			Status:   uint8(d.Status),
 		}
 
-		// 判断是否存在
-		exist, _ := dao.Device.FindByDeviceID(device.DeviceID)
+		// 使用 Name 查找本地设备
+		exist, err := dao.Device.FindByDeviceName(device.Name)
+		if err != nil && err.Error() != "record not found" {
+			// 查询异常直接跳过
+			continue
+		}
+
 		if exist != nil {
 			device.ID = exist.ID
+			// 更新设备
 			if err := dao.Device.Update(device); err != nil {
-				fmt.Println("更新设备失败:", device.DeviceID, err)
+				// 更新失败可记录日志或返回
+				continue
 			}
 		} else {
+			// 新建设备
 			if err := dao.Device.Create(device); err != nil {
-				fmt.Println("创建设备失败:", device.DeviceID, err)
+				// 创建失败可记录日志或返回
+				continue
 			}
 		}
 	}
 
 	return nil
 }
+
+
 
 // SyncDetail 拉取单个设备详情并更新本地
 func (s *deviceService) SyncDetail(deviceID string) (*models.Device, error) {
@@ -98,14 +112,13 @@ func (s *deviceService) SyncDetail(deviceID string) (*models.Device, error) {
 	}
 
 	device := &models.Device{
-		DeviceID: deviceID,
-		Name:     fmt.Sprintf("%v", data["name"]),
-		Product:  fmt.Sprintf("%v", data["product_id"]),
-		Region:   fmt.Sprintf("%v", data["region"]),
-		Status:   2, // 默认离线
+		DeviceID: data.Imei, // 用 IMEI 作为唯一标识
+		Name:     data.Name,
+		Product:  data.ProductID,
+		Status:   uint8(data.Status),
 	}
 
-	exist, _ := dao.Device.FindByDeviceID(deviceID)
+	exist, _ := dao.Device.FindByDeviceID(device.DeviceID)
 	if exist != nil {
 		device.ID = exist.ID
 		if err := dao.Device.Update(device); err != nil {

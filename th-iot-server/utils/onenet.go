@@ -17,10 +17,30 @@ import (
 	"th-iot-server/config"
 )
 
-// ---------------------- 签名服务 ----------------------
+// const (
+// 	ProductID  = "Ay3w00GD25"
+// 	ProductKey = "w7G5OVd5u9/BD+l/42FtbYcJe9d362EvJaFbWY0nHcU="
+// 	Version    = "2022-05-01"
+// 	Method     = "sha1"
+// 	OneNETBase = "https://iot-api.heclouds.com"
+// )
+var (
+	ProductID  = config.OneNETProductID
+	ProductKey = config.OneNETProductAccessKey
+	Version    = config.OneNETVersion
+	Method     = config.OneNETMethod
+	OneNETBase = "https://iot-api.heclouds.com"
+)
+	
 
-// generateSign 根据 OneNET 签名算法生成 sign
-func generateSign(params map[string]string, key string) (string, error) {
+// ---------------------- 签名函数 ----------------------
+
+func GenerateSign(params map[string]string, key string) (string, error) {
+	fmt.Println("ProductID:", ProductID)
+	fmt.Println("ProductKey:", ProductKey)
+	fmt.Println("Version:", Version)
+	fmt.Println("Method:", Method)
+	fmt.Println("OneNETBase:", OneNETBase)
 	strToSign := fmt.Sprintf("%s\n%s\n%s\n%s",
 		params["et"], params["method"], params["res"], params["version"])
 
@@ -48,50 +68,33 @@ func generateSign(params map[string]string, key string) (string, error) {
 
 // ---------------------- Token 生成 ----------------------
 
-// GenerateToken 生成 OneNET Token
-// key 可选，传空则使用产品级 AccessKey
-func GenerateToken(res string, expireTime int64, key string) (string, error) {
-	if key == "" {
-		key = config.OneNETProductAccessKey
-	}
-
+func GenerateToken(res string, expireTime int64) (string, error) {
 	params := map[string]string{
-		"version": config.OneNETVersion,
+		"version": Version,
 		"res":     res,
 		"et":      fmt.Sprintf("%d", expireTime),
-		"method":  config.OneNETMethod,
+		"method":  Method,
 	}
-
-	sign, err := generateSign(params, key)
+	sign, err := GenerateSign(params, ProductKey)
 	if err != nil {
 		return "", err
 	}
-
 	token := fmt.Sprintf("version=%s&res=%s&et=%s&method=%s&sign=%s",
-		url.QueryEscape(params["version"]),
-		url.QueryEscape(params["res"]),
+		url.QueryEscape(Version),
+		url.QueryEscape(res),
 		params["et"],
-		url.QueryEscape(params["method"]),
+		url.QueryEscape(Method),
 		url.QueryEscape(sign),
 	)
 	return token, nil
 }
 
-// ---------------------- HTTP 请求封装 ----------------------
+// ---------------------- HTTP 请求 ----------------------
 
-func doRequest(method, urlStr string, body []byte, token string, result interface{}) error {
-	fmt.Println("HTTP 请求信息:")
-	fmt.Println("URL:", urlStr)
-	fmt.Println("Method:", method)
-	fmt.Println("Body:", string(body))
-	fmt.Println("Authorization:", token)
-	fmt.Println("-----------------------------------")
-
-	var reqBody *bytes.Reader
+func DoRequest(method, urlStr string, body []byte, token string, result interface{}) error {
+	reqBody := bytes.NewReader([]byte{})
 	if body != nil {
 		reqBody = bytes.NewReader(body)
-	} else {
-		reqBody = bytes.NewReader([]byte{})
 	}
 
 	req, err := http.NewRequest(method, urlStr, reqBody)
@@ -110,21 +113,16 @@ func doRequest(method, urlStr string, body []byte, token string, result interfac
 	}
 	defer resp.Body.Close()
 
-	respBytes, err := io.ReadAll(resp.Body)
+	responseBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("读取响应体失败: %v", err)
 	}
 
 	var rawResp map[string]interface{}
-	if err := json.Unmarshal(respBytes, &rawResp); err != nil {
-		fmt.Printf("HTTP 响应体 (非JSON): %s\n", string(respBytes))
+	if err := json.Unmarshal(responseBytes, &rawResp); err != nil {
+		fmt.Printf("HTTP 响应体 (非JSON): %s\n", string(responseBytes))
 		return fmt.Errorf("解析响应 JSON 失败: %v", err)
 	}
-
-	rawJSON, _ := json.MarshalIndent(rawResp, "", "  ")
-	fmt.Println("HTTP 响应 JSON:")
-	fmt.Println(string(rawJSON))
-	fmt.Println("-----------------------------------")
 
 	if result != nil {
 		data, _ := json.Marshal(rawResp)
@@ -142,57 +140,115 @@ func doRequest(method, urlStr string, body []byte, token string, result interfac
 	return nil
 }
 
-// ---------------------- OneNET 功能函数 ----------------------
+// ---------------------- 设备结构体 ----------------------
 
-// GetDeviceList 获取设备列表 (产品级 Token)
-func GetDeviceList() ([]map[string]interface{}, error) {
-	urlStr := fmt.Sprintf("https://iot-api.heclouds.com/device/list?product_id=%s&offset=0&limit=100", config.OneNETProductID)
-	expireTime := time.Now().Add(5 * time.Minute).Unix()
-	token, err := GenerateToken(fmt.Sprintf("products/%s", config.OneNETProductID), expireTime, "")
-	if err != nil {
-		return nil, fmt.Errorf("生成 token 失败: %v", err)
-	}
+type Device struct {
+	Did             string  `json:"did"`
+	ProductID       string  `json:"pid"`
+	Name            string  `json:"name"`
+	Status          int     `json:"status"`
+	Imei            string  `json:"imei"`
+	AccessProtocol  int     `json:"access_pt"`
+	DataProtocol    int     `json:"data_pt"`
+	CreateTime      string  `json:"create_time"`
+	ActivateTime    string  `json:"activate_time"`
+	LastConnectTime string  `json:"last_connect_time"`
+	Lat             string  `json:"lat"`
+	Lon             string  `json:"lon"`
+	EnableStatus    bool    `json:"enable_status"`
+	Private         bool    `json:"private"`
+	Obsv            bool    `json:"obsv"`
+	ObsvSt          bool    `json:"obsv_st"`
+	IntelligentWay  int     `json:"intelligent_way"`
+}
+
+type DeviceDetail struct {
+	Name        string                 `json:"name"`
+	ProductID   string                 `json:"product_id"`
+	Status      int                    `json:"status"`
+	Imei        string                 `json:"imei"`
+	Properties  map[string]interface{} `json:"properties"`
+	Desc        string                 `json:"desc"`
+	AuthInfo    map[string]string      `json:"auth_info"`
+	CreateTime  string                 `json:"create_time"`
+	ActivateTime string                `json:"activate_time"`
+	LastConnectTime string             `json:"last_connect_time"`
+	Lat         string                 `json:"lat"`
+	Lon         string                 `json:"lon"`
+	EnableStatus bool                  `json:"enable_status"`
+	Private      bool                  `json:"private"`
+	Obsv         bool                  `json:"obsv"`
+	ObsvSt       bool                  `json:"obsv_st"`
+	IntelligentWay int                 `json:"intelligent_way"`
+}
+
+// ---------------------- 1. 获取设备列表 ----------------------
+
+func GetDeviceList(offset, limit int) ([]Device, error) {
+	urlStr := fmt.Sprintf("%s/device/list?product_id=%s&offset=%d&limit=%d", OneNETBase, ProductID, offset, limit)
 
 	var res struct {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
 		Data struct {
-			List []map[string]interface{} `json:"list"`
+			List   []Device `json:"list"`
+			Offset int      `json:"offset"`
+			Limit  int      `json:"limit"`
 		} `json:"data"`
 	}
 
-	if err := doRequest("GET", urlStr, nil, token, &res); err != nil {
-		return nil, err
+	expireTime := time.Now().Add(5 * time.Minute).Unix()
+	token, err := GenerateToken(fmt.Sprintf("products/%s", ProductID), expireTime)
+	if err != nil {
+		return nil, fmt.Errorf("生成 token 失败: %v", err)
+	}
+
+	if err := DoRequest("GET", urlStr, nil, token, &res); err != nil {
+		return nil, fmt.Errorf("获取设备列表失败: %v", err)
 	}
 
 	return res.Data.List, nil
 }
 
-// GetDeviceDetail 获取单个设备详情 (产品级 Token)
-func GetDeviceDetail(deviceName string) (map[string]interface{}, error) {
-	urlStr := fmt.Sprintf("https://iot-api.heclouds.com/device/detail?product_id=%s&device_name=%s", config.OneNETProductID, deviceName)
+// ---------------------- 2. 获取设备详情 ----------------------
+
+func GetDeviceDetail(deviceName string) (*DeviceDetail, error) {
+	urlStr := fmt.Sprintf("%s/device/detail?product_id=%s&device_name=%s", OneNETBase, ProductID, url.QueryEscape(deviceName))
+
+	var res struct {
+		Code int          `json:"code"`
+		Msg  string       `json:"msg"`
+		Data DeviceDetail `json:"data"`
+	}
+
 	expireTime := time.Now().Add(5 * time.Minute).Unix()
-	token, err := GenerateToken(fmt.Sprintf("products/%s", config.OneNETProductID), expireTime, "")
+	token, err := GenerateToken(fmt.Sprintf("products/%s/devices/%s", ProductID, deviceName), expireTime)
 	if err != nil {
 		return nil, fmt.Errorf("生成 token 失败: %v", err)
 	}
 
-	var result map[string]interface{}
-	if err := doRequest("GET", urlStr, nil, token, &result); err != nil {
-		return nil, err
+	if err := DoRequest("GET", urlStr, nil, token, &res); err != nil {
+		return nil, fmt.Errorf("获取设备详情失败: %v", err)
 	}
 
-	return result, nil
+	return &res.Data, nil
 }
 
-// SetDeviceProperty 下发物模型属性 (产品级 Token)
-func SetDeviceProperty(deviceName string, properties map[string]interface{}) error {
-	const apiURL = "https://iot-api.heclouds.com/thingmodel/set-device-property"
+// ---------------------- 3. 设置设备属性 ----------------------
 
-	bodyStruct := map[string]interface{}{
-		"product_id":  config.OneNETProductID,
-		"device_name": deviceName,
-		"params":      properties,
+type SetPropertyBody struct {
+	ProductID  string                 `json:"product_id"`
+	DeviceName string                 `json:"device_name"`
+	Params     map[string]interface{} `json:"params"`
+}
+
+func SetDeviceProperty(deviceName string, properties map[string]interface{}) error {
+	apiURL := fmt.Sprintf("%s/thingmodel/set-device-property", OneNETBase)
+
+	bodyStruct := SetPropertyBody{
+		ProductID:  ProductID,
+		DeviceName: deviceName,
+		Params:     properties,
 	}
 
 	jsonData, err := json.Marshal(bodyStruct)
@@ -201,18 +257,16 @@ func SetDeviceProperty(deviceName string, properties map[string]interface{}) err
 	}
 
 	expireTime := time.Now().Add(5 * time.Minute).Unix()
-	res := fmt.Sprintf("products/%s", config.OneNETProductID)
-	token, err := GenerateToken(res, expireTime, "")
+	token, err := GenerateToken(fmt.Sprintf("products/%s", ProductID), expireTime)
 	if err != nil {
-		return fmt.Errorf("生成产品 Token 失败: %v", err)
+		return fmt.Errorf("生成 token 失败: %v", err)
 	}
 
 	var result map[string]interface{}
-	if err := doRequest("POST", apiURL, jsonData, token, &result); err != nil {
-		return err
+	if err := DoRequest("POST", apiURL, jsonData, token, &result); err != nil {
+		return fmt.Errorf("物模型设置属性请求失败: %v", err)
 	}
 
-	// 检查设备端返回的 code
 	if data, ok := result["data"].(map[string]interface{}); ok {
 		if code, ok := data["code"].(float64); ok && code != 200 {
 			msg := "Unknown Device Error"
@@ -226,15 +280,14 @@ func SetDeviceProperty(deviceName string, properties map[string]interface{}) err
 	return nil
 }
 
-// ControlRelay 设置继电器开关
+// ---------------------- 4. 控制继电器 ----------------------
+
 func ControlRelay(deviceName string, on bool) error {
-	val := 0
-	action := "关闭"
+	relayValue := 0
 	if on {
-		val = 1
-		action = "打开"
+		relayValue = 1
 	}
 
-	fmt.Printf("尝试 %s设备 %s继电器...\n", deviceName, action)
-	return SetDeviceProperty(deviceName, map[string]interface{}{"relay": val})
+	properties := map[string]interface{}{"relay": relayValue}
+	return SetDeviceProperty(deviceName, properties)
 }
