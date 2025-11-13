@@ -17,13 +17,7 @@ import (
 	"th-iot-server/config"
 )
 
-// const (
-// 	ProductID  = "Ay3w00GD25"
-// 	ProductKey = "w7G5OVd5u9/BD+l/42FtbYcJe9d362EvJaFbWY0nHcU="
-// 	Version    = "2022-05-01"
-// 	Method     = "sha1"
-// 	OneNETBase = "https://iot-api.heclouds.com"
-// )
+
 var (
 	ProductID  = config.OneNETProductID
 	ProductKey = config.OneNETProductAccessKey
