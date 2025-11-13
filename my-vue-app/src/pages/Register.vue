@@ -130,6 +130,7 @@ let timer = null;
 const loadCaptcha = async () => {
   try {
     const res = await getCaptcha();
+    console.log('res:',res)
     if (res.data.code === 0) {
       captchaImage.value = res.data.data.image;
       captchaId.value = res.data.data.captcha_id;
@@ -144,14 +145,16 @@ const loadCaptcha = async () => {
 
 // 发送邮箱验证码
 const sendEmailVerifyCode = async () => {
+  if (!username.value) return showNotify.warn("请先输入用户名");
   if (!email.value) return showNotify.warn("请先输入邮箱");
   if (!calcCode.value) return showNotify.warn("请输入图片验证码");
   if (!captchaId.value) return showNotify.warn("请刷新验证码");
 
   try {
     const res = await sendEmailCode({
-      email,
-      captcha: calcCode.value,
+      username:username.value,
+      email:email.value,
+      captcha_code: calcCode.value,
       captcha_id: captchaId.value,
     });
     if (res.data.code === 0) {
@@ -163,7 +166,7 @@ const sendEmailVerifyCode = async () => {
     }
   } catch (err) {
     console.error(err);
-    showNotify.error("发送验证码异常");
+    showNotify.danger("发送验证码异常");
     loadCaptcha();
   }
 };
@@ -194,19 +197,19 @@ const doRegister = async () => {
       username: username.value,
       password: password.value,
       email: email.value,
-      verifyCode: verifyCode.value,
+      email_code: verifyCode.value,
       captcha_id: captchaId.value,
     });
     if (res.data.code === 0) {
       showNotify.success("注册成功");
       router.push("/login");
     } else {
-      showNotify.error(res.data.msg || "注册失败");
+      showNotify.danger(res.data.msg || "注册失败");
       loadCaptcha();
     }
   } catch (err) {
     console.error(err);
-    showNotify.error("注册异常");
+    showNotify.danger("注册异常");
     loadCaptcha();
   }
 };
