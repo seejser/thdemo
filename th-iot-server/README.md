@@ -15,6 +15,9 @@ go mod tidy
 
 # 运行
 go run main.go
+
+# 打包部署
+go build ./
 ```
 
 ## 环境配置步骤
