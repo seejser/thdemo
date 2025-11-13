@@ -1,11 +1,16 @@
 import axios from "axios";
 import { showNotify } from "@nutui/nutui";
 
+const baseURL = import.meta.env.VITE_APP_API_URL
+  ? `${import.meta.env.VITE_APP_API_URL}/api/v1`
+  : "/api/v1";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_APP_API_URL || "/api/v1",
+  baseURL,
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
 });
+
 
 function handleLoginExpired() {
   localStorage.removeItem("token");
@@ -72,7 +77,5 @@ api.interceptors.response.use(
 
 window.api = api;
 export default api;
-export * from "./auth";
-export * from "./user";
-export * from "./device";
+
 

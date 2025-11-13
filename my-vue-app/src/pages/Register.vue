@@ -6,94 +6,99 @@
         <p>请注册</p>
       </nut-space>
     </div>
+    <nut-space direction="vertical" fill>
+      <nut-row >
+        <!-- 用户名 -->
+        <nut-col :span="24" style="margin-bottom: 16px;">
+          <nut-input v-model="username" placeholder="请输入您的用户名" />
+        </nut-col>
 
-    <nut-row>
-      <!-- 用户名 -->
-      <nut-col :span="24">
-        <nut-input v-model="username" placeholder="请输入您的用户名" />
-      </nut-col>
+        <!-- 邮箱 -->
+        <nut-col :span="24">
+          <nut-input
+            v-model="email"
+            placeholder="请输入您的邮箱"
+            type="email"
+          />
+        </nut-col>
 
-      <!-- 邮箱 -->
-      <nut-col :span="24">
-        <nut-input v-model="email" placeholder="请输入您的邮箱" type="email" />
-      </nut-col>
+        <!-- 图形验证码 -->
+        <nut-col :span="24">
+          <nut-row>
+            <nut-col :span="12">
+              <nut-input
+                v-model="calcCode"
+                placeholder="请输入图片验证码"
+                clearable
+              />
+            </nut-col>
+            <nut-col :span="8" class="captcha-box">
+              <nut-image
+                :src="captchaImage"
+                width="100"
+                height="34"
+                @click="loadCaptcha"
+              />
+            </nut-col>
+          </nut-row>
+        </nut-col>
 
-      <!-- 图形验证码 -->
-      <nut-col :span="24">
-        <nut-row>
-          <nut-col :span="12">
-            <nut-input
-              v-model="calcCode"
-              placeholder="请输入图片验证码"
-              clearable
-            />
-          </nut-col>
-          <nut-col :span="8" class="captcha-box">
-            <nut-image
-              :src="captchaImage"
-              width="100"
-              height="34"
-              @click="loadCaptcha"
-            />
-          </nut-col>
-        </nut-row>
-      </nut-col>
+        <!-- 邮箱验证码 -->
+        <nut-col :span="24">
+          <nut-row>
+            <nut-col :span="12">
+              <nut-input
+                v-model="verifyCode"
+                placeholder="请输入邮箱验证码"
+                clearable
+              />
+            </nut-col>
+            <nut-col :span="8">
+              <nut-button
+                plain
+                type="info"
+                :disabled="countdown > 0"
+                @click="sendEmailVerifyCode"
+              >
+                {{ countdown > 0 ? countdown + "s" : "发送验证码" }}
+              </nut-button>
+            </nut-col>
+          </nut-row>
+        </nut-col>
 
-      <!-- 邮箱验证码 -->
-      <nut-col :span="24">
-        <nut-row>
-          <nut-col :span="12">
-            <nut-input
-              v-model="verifyCode"
-              placeholder="请输入邮箱验证码"
-              clearable
-            />
-          </nut-col>
-          <nut-col :span="8">
-            <nut-button
-              plain
-              type="info"
-              :disabled="countdown > 0"
-              @click="sendEmailVerifyCode"
-            >
-              {{ countdown > 0 ? countdown + 's' : '发送验证码' }}
+        <!-- 密码 -->
+        <nut-col :span="24">
+          <nut-input
+            v-model="password"
+            placeholder="请输入您的密码"
+            type="password"
+            clearable
+          />
+        </nut-col>
+
+        <!-- 确认密码 -->
+        <nut-col :span="24">
+          <nut-input
+            v-model="varpassword"
+            placeholder="请确认您的密码"
+            type="password"
+            clearable
+          />
+        </nut-col>
+
+        <!-- 操作按钮 -->
+        <nut-col :span="24">
+          <nut-space direction="vertical" fill>
+            <nut-button type="primary" @click="doRegister" class="btn">
+              注册
             </nut-button>
-          </nut-col>
-        </nut-row>
-      </nut-col>
-
-      <!-- 密码 -->
-      <nut-col :span="24">
-        <nut-input
-          v-model="password"
-          placeholder="请输入您的密码"
-          type="password"
-          clearable
-        />
-      </nut-col>
-
-      <!-- 确认密码 -->
-      <nut-col :span="24">
-        <nut-input
-          v-model="varpassword"
-          placeholder="请确认您的密码"
-          type="password"
-          clearable
-        />
-      </nut-col>
-
-      <!-- 操作按钮 -->
-      <nut-col :span="24">
-        <nut-space direction="vertical" fill>
-          <nut-button type="primary" @click="doRegister" class="btn">
-            注册
-          </nut-button>
-          <nut-button type="default" @click="goLogin" class="btn">
-            登录
-          </nut-button>
-        </nut-space>
-      </nut-col>
-    </nut-row>
+            <nut-button type="default" @click="goLogin" class="btn">
+              登录
+            </nut-button>
+          </nut-space>
+        </nut-col>
+      </nut-row>
+    </nut-space>
   </div>
 </template>
 
@@ -176,8 +181,10 @@ const startCountdown = () => {
 
 // 注册
 const doRegister = async () => {
-  if (!username.value || !password.value) return showNotify.warn("用户名或密码不能为空");
-  if (password.value !== varpassword.value) return showNotify.warn("两次密码输入不一致");
+  if (!username.value || !password.value)
+    return showNotify.warn("用户名或密码不能为空");
+  if (password.value !== varpassword.value)
+    return showNotify.warn("两次密码输入不一致");
   if (!email.value) return showNotify.warn("请输入邮箱");
   if (!verifyCode.value) return showNotify.warn("请输入邮箱验证码");
   if (!captchaId.value) return showNotify.warn("请刷新验证码");
@@ -235,5 +242,8 @@ onMounted(() => {
 
 .btn {
   width: 100% !important;
+}
+.nut-col {
+  margin-bottom: 16px;
 }
 </style>

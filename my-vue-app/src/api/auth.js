@@ -1,5 +1,6 @@
 // src/api/auth.js
-import api from "./index.js";
+import api from "@/api"; // 默认导入
+
 
 /**
  * 获取图片验证码

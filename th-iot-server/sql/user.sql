@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users
 ADD COLUMN DeletedAt DATETIME NULL COMMENT '逻辑删除标志，软删除' AFTER updated_at,
 ADD INDEX idx_deleted_at (DeletedAt);
-//fix
+-- fix
 DeletedAt   datetime  YES  MUL  NULL
 deleted_at  datetime  YES  NULL
 

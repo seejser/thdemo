@@ -1,5 +1,6 @@
 // src/api/user.js
-import api from "./index.js";
+import api from "@/api"; // 默认导入
+
 
 /**
  * 获取当前登录用户信息
