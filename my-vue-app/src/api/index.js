@@ -1,5 +1,6 @@
 import axios from "axios";
 import { showNotify } from "@nutui/nutui";
+import router from "@/router"; // 路由实例
 
 const baseURL = import.meta.env.VITE_APP_API_URL
   ? `${import.meta.env.VITE_APP_API_URL}/api/v1`
@@ -11,33 +12,38 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-
-function handleLoginExpired() {
+// 登录过期处理
+function goLogin() {
   localStorage.removeItem("token");
   localStorage.removeItem("refreshToken");
-  showNotify.success("登录状态已过期，请重新登录");
-  window.location.href = "/login.html";
+  showNotify.warn('登录状态已过期，请重新登录')
+  router.push("/login");
 }
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) config.headers["Authorization"] = "Bearer " + token;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// 请求拦截器，带上 token
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem("token");
+  console.log("Request token:", token);
+  if (token) config.headers["Authorization"] = "Bearer " + token;
+  return config;
+});
 
+// 处理 token 刷新
 let isRefreshing = false;
 let refreshSubscribers = [];
-function subscribeTokenRefresh(cb) { refreshSubscribers.push(cb); }
-function onRefreshed(token) { refreshSubscribers.forEach(cb => cb(token)); refreshSubscribers = []; }
 
+function subscribeTokenRefresh(cb) { refreshSubscribers.push(cb); }
+function onRefreshed(token) {
+  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers = [];
+}
+
+// 响应拦截器
 api.interceptors.response.use(
   (response) => {
     if (response.data && response.data.code !== 0) {
       const msg = response.data.message || response.data.msg || "未知业务错误";
-      showNotify.success(msg);
+      showNotify.warn(msg)
       const err = new Error(msg);
       err.code = response.data.code;
       return Promise.reject(err);
@@ -49,7 +55,7 @@ api.interceptors.response.use(
     if (!error.response || error.response.status !== 401) return Promise.reject(error);
 
     const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) { handleLoginExpired(); return Promise.reject(error); }
+    if (!refreshToken) { goLogin(); return Promise.reject(error); }
 
     if (!isRefreshing) {
       isRefreshing = true;
@@ -60,10 +66,9 @@ api.interceptors.response.use(
           const newRefreshToken = res.data.data.refreshToken || refreshToken;
           localStorage.setItem("token", newToken);
           localStorage.setItem("refreshToken", newRefreshToken);
-          isRefreshing = false;
           onRefreshed(newToken);
-        } else { handleLoginExpired(); }
-      } catch (e) { handleLoginExpired(); } finally { isRefreshing = false; }
+        } else { goLogin(); }
+      } catch (e) { goLogin(); } finally { isRefreshing = false; }
     }
 
     return new Promise(resolve => {
@@ -77,5 +82,3 @@ api.interceptors.response.use(
 
 window.api = api;
 export default api;
-
-

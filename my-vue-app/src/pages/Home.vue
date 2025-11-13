@@ -21,38 +21,36 @@
         <!-- 设备列表 -->
         <div class="device-list">
           <div
-            v-for="(item, index) in sum"
-            :key="index"
+            v-for="item in devices"
+            :key="item.id"
             class="device-item"
             :class="{
-              'status-online': index % 3 === 0,
-              'status-offline': index % 3 === 1,
-              'status-fault': index % 3 === 2
+              'status-online': item.status === 0,
+              'status-offline': item.status === 1,
+              'status-fault': item.status === 2
             }"
-            @click="goToDetail(index)"
+            @click="goToDetail(item.id)"
           >
             <div class="device-info">
-              <p>设备 {{ index }}</p>
-              <p>区域 {{ index + 1 }}号</p>
+              <p>{{ item.name }}</p>
+              <p>产品 {{ item.product }}</p>
             </div>
 
             <div class="device-actions">
               <div class="device-status">
                 <span class="status-dot"></span>
-                <span class="status-text">
-                  {{ statusText(index % 3) }}
-                </span>
+                <span class="status-text">{{ statusText(item.status) }}</span>
               </div>
 
               <label class="toggle-switch">
-                <input type="checkbox" :checked="index % 2 === 0" />
+                <input type="checkbox" v-model="item.switch" @change="toggleSwitch(item)" />
                 <span class="slider"></span>
               </label>
             </div>
           </div>
 
           <!-- 空列表提示 -->
-          <div v-if="sum === 0" class="empty-list-message">
+          <div v-if="devices.length === 0" class="empty-list-message">
             <p>暂无设备数据</p>
             <p>请点击刷新按钮或联系管理员添加设备</p>
           </div>
@@ -65,46 +63,83 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import HyTabBar from "./../components/Hytabbar.vue";
+import { getDeviceList } from "@/api/device";
 
 const router = useRouter();
-const sum = ref(24);
-const cycle = ref(0);
-const infinityValue = ref(false);
+const devices = ref([]);
+const page = ref(1);
+const limit = ref(10);
+const total = ref(0);
 const hasMore = ref(true);
+const infinityValue = ref(false);
 const refresh = ref(false);
 
-const loadMore = () => {
-  setTimeout(() => {
-    sum.value += 24;
-    cycle.value++;
-    if (cycle.value > 2) hasMore.value = false;
+const fetchDevices = async (reset = false) => {
+  try {
+    const res = await getDeviceList(page.value, limit.value);
+
+    if (res.data.code !== 0) return;
+
+    const list = res.data.data.list || [];
+    total.value = res.data.data.total;
+
+    if (reset) {
+      devices.value = list;
+    } else {
+      devices.value = [...devices.value, ...list];
+    }
+
+    hasMore.value = devices.value.length < total.value;
+  } catch (err) {
+    console.error("获取设备列表失败", err);
+    hasMore.value = false;
+  } finally {
     infinityValue.value = false;
-  }, 1000);
+    refresh.value = false;
+  }
 };
+
 
 const refreshFun = () => {
-  setTimeout(() => {
-    refresh.value = false;
-    sum.value = 24;
-  }, 1500);
+  page.value = 1;
+  fetchDevices(true);
 };
 
-const goToDetail = (index) => {
-  router.push("/detail/" + index);
+const loadMore = () => {
+  page.value++;
+  fetchDevices();
 };
 
-const statusText = (statusIndex) => {
-  if (statusIndex === 0) return "在线";
-  if (statusIndex === 1) return "离线";
-  if (statusIndex === 2) return "故障";
+const goToDetail = (id) => {
+  router.push("/detail/" + id);
 };
+
+const statusText = (status) => {
+  switch (status) {
+    case 0: return "在线";
+    case 1: return "离线";
+    case 2: return "故障";
+    default: return "未知";
+  }
+};
+
+const toggleSwitch = (item) => {
+  item.switch = !item.switch;
+  console.log("设备开关状态:", item.name, item.switch);
+  // TODO: 调用后端接口更新开关状态
+};
+
+onMounted(() => {
+  fetchDevices(true);
+});
+
 </script>
 
 <style scoped>
-/* 顶部固定导航栏 */
+/* 保留你原有的样式，不做改动 */
 .header {
   position: fixed;
   top: 0;
@@ -132,12 +167,10 @@ const statusText = (statusIndex) => {
   cursor: pointer;
 }
 
-/* 列表容器 */
 .device-list {
-  padding: 60px 10px 10px 10px; /* 留出顶部导航高度 */
+  padding: 60px 10px 10px 10px;
 }
 
-/* 设备卡片 */
 .device-item {
   background-color: #fff;
   border-radius: 10px;
@@ -149,7 +182,6 @@ const statusText = (statusIndex) => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* 设备信息 */
 .device-info {
   flex-grow: 1;
   margin-right: 10px;
@@ -164,7 +196,6 @@ const statusText = (statusIndex) => {
   color: #999;
 }
 
-/* 状态 + 开关 */
 .device-actions {
   display: flex;
   flex-direction: column;
@@ -206,7 +237,6 @@ const statusText = (statusIndex) => {
   color: #f44336;
 }
 
-/* 开关样式 */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -247,7 +277,6 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* 空列表提示 */
 .empty-list-message {
   text-align: center;
   padding: 50px 20px;

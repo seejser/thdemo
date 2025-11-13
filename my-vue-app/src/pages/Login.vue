@@ -58,17 +58,16 @@ const doLogin = async () => {
       username: username.value,
       password: password.value,
     });
-
+    console.log("res:", res);
     if (res.data.code === 0 && res.data.data) {
       // 登录成功，保存 token
-      const { accessToken, refreshToken } = res.data.data;
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
+      const { access_token, refresh_token } = res.data.data;
+      localStorage.setItem("token", access_token);
+      localStorage.setItem("refreshToken", refresh_token);
       showNotify.success("登录成功");
       router.push("/"); // 跳转首页
     } else {
-      showNotify.error(res.data.msg || "登录失败");
+      showNotify.error("登录失败");
     }
   } catch (err) {
     console.error(err);
