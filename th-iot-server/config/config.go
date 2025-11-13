@@ -67,11 +67,11 @@ var (
 
 	SMTPHost = "smtp.qq.com"
 	SMTPPort = 587
-	SMTPUser = "1598253545@qq.com"
-	SMTPPass = "nfuzpssryuheiebi"
+	SMTPUser = "159825@qq.com"
+	SMTPPass = ""
 
-	OneNETProductID        = "Ay3w00GD25"
-	OneNETProductAccessKey = "w7G5OVd5u9/BD+l/42FtbYcJe9d362EvJaFbWY0nHcU="
+	OneNETProductID        = ""
+	OneNETProductAccessKey = ""
 	OneNETVersion          = "2022-05-01"
 	OneNETMethod           = "sha1"
 )

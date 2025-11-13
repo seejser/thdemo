@@ -23,6 +23,7 @@ go run main.go
 # 在项目目录下创建 .env文件
 touch .env
 #写入如下内容
+
 # Gin 配置 release/debug
 GIN_MODE=debug
 # Redis
