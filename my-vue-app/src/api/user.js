@@ -9,6 +9,11 @@ import api from "@/api"; // 默认导入
 export const getUserInfo = () => api.get("/user/info");
 
 /**
+ * 退出当前登录用户
+ */
+export const goLogout = () => api.goLogin();
+
+/**
  * 下面是可扩展的用户接口示例
  * 如果将来后端增加修改用户信息、修改密码等接口，可以在这里封装
  */

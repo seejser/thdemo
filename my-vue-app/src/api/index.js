@@ -16,12 +16,12 @@ const api = axios.create({
 function goLogin() {
   localStorage.removeItem("token");
   localStorage.removeItem("refreshToken");
-  showNotify.warn('登录状态已过期，请重新登录')
+  showNotify.warn("登录状态已过期，请重新登录");
   router.push("/login");
 }
 
 // 请求拦截器，带上 token
-api.interceptors.request.use(config => {
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   console.log("Request token:", token);
   if (token) config.headers["Authorization"] = "Bearer " + token;
@@ -32,9 +32,11 @@ api.interceptors.request.use(config => {
 let isRefreshing = false;
 let refreshSubscribers = [];
 
-function subscribeTokenRefresh(cb) { refreshSubscribers.push(cb); }
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
 function onRefreshed(token) {
-  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
 }
 
@@ -43,7 +45,10 @@ api.interceptors.response.use(
   (response) => {
     if (response.data && response.data.code !== 0) {
       const msg = response.data.message || response.data.msg || "未知业务错误";
-      showNotify.warn(msg)
+      showNotify.warn(msg);
+      if(response.data.code===401){
+        goLogin()
+      }
       const err = new Error(msg);
       err.code = response.data.code;
       return Promise.reject(err);
@@ -52,26 +57,38 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    if (!error.response || error.response.status !== 401) return Promise.reject(error);
+    if (!error.response || error.response.status !== 401)
+      return Promise.reject(error);
 
     const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) { goLogin(); return Promise.reject(error); }
+    if (!refreshToken) {
+      goLogin();
+      return Promise.reject(error);
+    }
 
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        const res = await axios.post("/api/v1/auth/refresh", { refresh_token: refreshToken });
-        if (res.data.code === 0 && res.data.data?.accessToken) {
-          const newToken = res.data.data.accessToken;
-          const newRefreshToken = res.data.data.refreshToken || refreshToken;
+        const res = await axios.post("/api/v1/auth/refresh", {
+          refresh_token: refreshToken,
+        });
+        if (res.data.code === 0 && res.data.data?.access_token) {
+          const newToken = res.data.data.access_token;
+          const newRefreshToken = res.data.data.refresh_token;
           localStorage.setItem("token", newToken);
           localStorage.setItem("refreshToken", newRefreshToken);
           onRefreshed(newToken);
-        } else { goLogin(); }
-      } catch (e) { goLogin(); } finally { isRefreshing = false; }
+        } else {
+          goLogin();
+        }
+      } catch (e) {
+        goLogin();
+      } finally {
+        isRefreshing = false;
+      }
     }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       subscribeTokenRefresh((token) => {
         originalRequest.headers["Authorization"] = "Bearer " + token;
         resolve(api.request(originalRequest));
@@ -79,6 +96,7 @@ api.interceptors.response.use(
     });
   }
 );
-
+// 挂载到 api 上
+api.goLogin = goLogin;
 window.api = api;
 export default api;

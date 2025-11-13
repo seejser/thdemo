@@ -38,7 +38,7 @@ func InitRouter() *gin.Engine {
 
 		// ---- 设备相关 ----
 		device := api.Group("/device")
-		//device.Use(middleware.AuthMiddleware()) // 需要登录
+		device.Use(middleware.AuthMiddleware()) // 需要登录
 		{
 			device.POST("", controllers.CreateDevice)       // 新增设备
 			device.PUT("/:id", controllers.UpdateDevice)    // 更新设备
